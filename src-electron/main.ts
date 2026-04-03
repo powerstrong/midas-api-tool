@@ -1,4 +1,4 @@
-﻿import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
+﻿import { app, BrowserWindow, dialog, ipcMain, shell, Menu } from "electron";
 import path from "node:path";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import axios from "axios";
@@ -18,7 +18,14 @@ const settingsFilePath = path.join(app.getPath("userData"), "settings.json");
 const defaultSettings = (): AppSettings => ({
   baseUrl: "",
   apiKey: "",
-  schemaFolderPath: ""
+  schemaFolderPath: "",
+  panelState: {
+    sidebarOpen: true,
+    settingsOpen: true,
+    alertOpen: true,
+    previewOpen: false,
+    validationOpen: true
+  }
 });
 
 const sanitizeBaseUrl = (value: string) => value.trim().replace(/\/+$/, "");
@@ -40,7 +47,11 @@ const readSettings = async (): Promise<AppSettings> => {
     return {
       baseUrl: parsed.baseUrl ?? "",
       apiKey: parsed.apiKey ?? "",
-      schemaFolderPath: parsed.schemaFolderPath ?? ""
+      schemaFolderPath: parsed.schemaFolderPath ?? "",
+      panelState: {
+        ...defaultSettings().panelState,
+        ...(parsed.panelState ?? {})
+      }
     };
   } catch {
     return defaultSettings();
@@ -99,13 +110,16 @@ const ensureSchemaFilesIfNeeded = async (folderPath: string) => {
 };
 
 const createWindow = async () => {
+  const appIconPath = path.join(app.getAppPath(), "public", "app-icon.png");
   const win = new BrowserWindow({
     width: 1600,
     height: 980,
     minWidth: 1280,
     minHeight: 820,
     backgroundColor: "#0d1320",
+    icon: appIconPath,
     show: false,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -113,6 +127,7 @@ const createWindow = async () => {
     }
   });
 
+  win.removeMenu();
   win.once("ready-to-show", () => {
     win.show();
   });
@@ -241,6 +256,7 @@ ipcMain.handle("midas:request", async (_event, input: RequestInput): Promise<Req
 });
 
 app.whenReady().then(async () => {
+  Menu.setApplicationMenu(null);
   await createWindow();
 
   app.on("activate", async () => {
@@ -255,3 +271,6 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+
+

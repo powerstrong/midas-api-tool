@@ -19,6 +19,7 @@ interface AppState {
   baseUrl: string;
   apiKey: string;
   schemaFolderPath: string;
+  panelState: AppSettings["panelState"];
   connectionState: ConnectionState;
   selectedEndpoint: DbEndpointId;
   rows: GridRow[];
@@ -32,6 +33,7 @@ interface AppState {
   setApiKey: (value: string) => void;
   chooseSchemaFolder: () => Promise<void>;
   openSchemaFolder: () => Promise<void>;
+  setPanelOpen: (panel: keyof AppSettings["panelState"], isOpen: boolean) => void;
   setSelectedEndpoint: (value: DbEndpointId) => void;
   setRows: (rows: GridRow[]) => void;
   upsertRow: (rowId: string, patch: Partial<GridRow>) => void;
@@ -44,6 +46,14 @@ interface AppState {
   refreshPreview: () => void;
   submit: (method: "POST" | "PUT") => Promise<void>;
 }
+
+const defaultPanelState: AppSettings["panelState"] = {
+  sidebarOpen: true,
+  settingsOpen: true,
+  alertOpen: true,
+  previewOpen: false,
+  validationOpen: true
+};
 
 const getNextKeySeed = (rows: GridRow[]) => {
   const numericKeys = rows
@@ -59,7 +69,8 @@ const syncSettings = (settings: AppSettings, set: (partial: Partial<AppState>) =
   set({
     baseUrl: settings.baseUrl,
     apiKey: settings.apiKey,
-    schemaFolderPath: settings.schemaFolderPath
+    schemaFolderPath: settings.schemaFolderPath,
+    panelState: settings.panelState ?? defaultPanelState
   });
 };
 
@@ -67,6 +78,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   baseUrl: "",
   apiKey: "",
   schemaFolderPath: "",
+  panelState: defaultPanelState,
   connectionState: "idle",
   selectedEndpoint: "FBLA",
   rows: getInitialRows("FBLA"),
@@ -97,6 +109,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   openSchemaFolder: async () => {
     await window.midasBridge.openSchemaFolder();
+  },
+  setPanelOpen: (panel, isOpen) => {
+    const nextPanelState = { ...get().panelState, [panel]: isOpen };
+    set({ panelState: nextPanelState });
+    void window.midasBridge.updateSettings({ panelState: nextPanelState });
   },
   setSelectedEndpoint: (value) => {
     set({

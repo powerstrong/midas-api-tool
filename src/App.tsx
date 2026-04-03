@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type { CellClassParams, ColDef, GridApi, GridReadyEvent, RowSelectedEvent } from "ag-grid-community";
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from "ag-grid-community";
@@ -26,10 +26,13 @@ const connectionLabelMap = {
 
 const App = () => {
   const gridApiRef = useRef<GridApi<GridRow>>();
+  const [messagePulse, setMessagePulse] = useState(false);
+  const [endpointSearch, setEndpointSearch] = useState("");
   const {
     baseUrl,
     apiKey,
     schemaFolderPath,
+    panelState,
     connectionState,
     selectedEndpoint,
     rows,
@@ -42,6 +45,7 @@ const App = () => {
     setApiKey,
     chooseSchemaFolder,
     openSchemaFolder,
+    setPanelOpen,
     setSelectedEndpoint,
     setRows,
     addRow,
@@ -56,6 +60,20 @@ const App = () => {
   useEffect(() => {
     void initialize();
   }, [initialize]);
+
+  useEffect(() => {
+    if (!resultMessage) {
+      return;
+    }
+
+    setPanelOpen("alertOpen", true);
+    setMessagePulse(true);
+    const timeoutId = window.setTimeout(() => {
+      setMessagePulse(false);
+    }, 1400);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [resultMessage, setPanelOpen]);
 
   const definition = getSelectedDefinition(selectedEndpoint);
   const issueMap = useMemo(() => {
@@ -180,126 +198,176 @@ const App = () => {
     }
   };
 
-  const endpointGroups = useMemo(() => {
-    return DB_DEFINITIONS.reduce<Record<string, typeof DB_DEFINITIONS>>((acc, item) => {
-      if (!acc[item.categoryId]) {
-        acc[item.categoryId] = [];
-      }
-      acc[item.categoryId].push(item);
-      return acc;
-    }, {});
+  const sortedDefinitions = useMemo(() => {
+    return [...DB_DEFINITIONS].sort((a, b) => a.endpoint.localeCompare(b.endpoint));
   }, []);
+
+  const filteredDefinitions = useMemo(() => {
+    const keyword = endpointSearch.trim().toLowerCase();
+    if (!keyword) {
+      return sortedDefinitions;
+    }
+
+    return sortedDefinitions.filter((item) => {
+      const haystack = `${item.endpoint} ${item.label} ${item.description} ${item.path}`.toLowerCase();
+      return haystack.includes(keyword);
+    });
+  }, [endpointSearch, sortedDefinitions]);
 
   return (
     <div className="app-shell">
-      <header className="topbar card">
-        <div className="topbar-main">
+      <header className="hero card">
+        <div className="hero-main">
           <div className="brand">
-            <div className="brand-mark">M</div>
-            <div>
-              <h1>midas-api-tool</h1>
-              <p>MIDAS API DB 입력 도구</p>
+            <div className="brand-mark">
+              <img className="brand-icon" src="/app-icon.png" alt="MIDAS API 입력 도구 아이콘" />
+            </div>
+            <div className="brand-copy">
+              <div className="eyebrow">MIDAS API Toolkit</div>
+              <h1>MIDAS API 입력 도구</h1>
+              <p>MIDAS API 매뉴얼 기준으로 작성된 DB 입력 도구입니다.</p>
             </div>
           </div>
-
+          <a
+            className="manual-link"
+            href="https://support.midasuser.com/hc/ko/p/gate_api_manual"
+            target="_blank"
+            rel="noreferrer"
+          >
+            MIDAS API 매뉴얼 보기
+          </a>
+        </div>
+        <div className="hero-footer">
           <div className="security-note">
-            <p>
-              이 프로그램은 사용자의 MIDAS API 정보를 외부 서버로 전송하지 않습니다.
-              모든 요청은 사용자의 컴퓨터에서 직접 MIDAS API 서버로 전송됩니다.
-            </p>
-            <p>스키마 저장 폴더: {schemaFolderPath || "아직 선택되지 않았습니다."}</p>
-            <div className="schema-actions">
-              <button type="button" className="ghost-button" onClick={() => void chooseSchemaFolder()}>
-                스키마 폴더 선택
-              </button>
-              <button
-                type="button"
-                className="ghost-button"
-                onClick={() => void openSchemaFolder()}
-                disabled={!schemaFolderPath}
-              >
-                스키마 폴더 열기
-              </button>
-            </div>
+            사용자의 MIDAS API 정보는 외부 서버로 전송되지 않으며, 모든 요청은 사용자의 컴퓨터에서 직접 MIDAS API 서버로 전송됩니다.
           </div>
         </div>
-
-        <div className="connection-grid">
-          <label className="field">
-            <span>Base URL</span>
-            <input
-              value={baseUrl}
-              onChange={(event) => setBaseUrl(event.target.value)}
-              placeholder="https://moa-engineers.midasit.com/civil"
-            />
-          </label>
-          <label className="field">
-            <span>MAPI-Key</span>
-            <input
-              value={apiKey}
-              onChange={(event) => setApiKey(event.target.value)}
-              type="password"
-              placeholder="MAPI-Key 입력"
-            />
-          </label>
-          <div className="connection-actions">
-            <button onClick={() => void testConnection()} disabled={isBusy}>
-              연결 테스트
-            </button>
-          </div>
-          <div className={`status-chip status-${connectionState}`}>
-            상태: {connectionLabelMap[connectionState]}
-          </div>
-        </div>
-
-        {resultMessage ? (
-          <div className={`top-banner tone-${resultMessage.tone}`}>{resultMessage.text}</div>
-        ) : null}
       </header>
 
-      <main className="workspace">
-        <aside className="sidebar card">
-          <div className="panel-title">
-            <h2>DB 목록</h2>
-            <p>대분류 선택 후 소분류를 고릅니다.</p>
+      <section className="collapsible card">
+        <div className="section-header">
+          <div>
+            <h2>작업 설정</h2>
+            <p>연결 정보와 스키마 저장 위치를 설정합니다.</p>
           </div>
-
-          {Object.entries(endpointGroups).map(([groupId, items]) => (
-            <section key={groupId} className="db-group">
-              <h3>{items[0].categoryLabel}</h3>
-              <div className="db-group-list">
-                {items.map((item) => (
-                  <button
-                    key={item.endpoint}
-                    className={item.endpoint === selectedEndpoint ? "db-item active" : "db-item"}
-                    onClick={() => setSelectedEndpoint(item.endpoint as DbEndpointId)}
-                  >
-                    <strong>{item.label}</strong>
-                    <span>{item.description}</span>
-                    <small>{item.path}</small>
+          <button type="button" className="ghost-button" onClick={() => setPanelOpen("settingsOpen", !panelState.settingsOpen)}>
+            {panelState.settingsOpen ? "접기" : "열기"}
+          </button>
+        </div>
+        {panelState.settingsOpen ? (
+          <div className="section-body settings-stack">
+            <section className="settings-block">
+              <div className="settings-block-header">
+                <div>
+                  <h3>연결 설정</h3>
+                  <p>MIDAS API 요청에 사용할 주소와 인증 키를 입력합니다.</p>
+                </div>
+                <div className={`status-chip status-${connectionState}`}>
+                  상태: {connectionLabelMap[connectionState]}
+                </div>
+              </div>
+              <div className="settings-grid">
+                <label className="field">
+                  <span>Base URL</span>
+                  <input
+                    value={baseUrl}
+                    onChange={(event) => setBaseUrl(event.target.value)}
+                    placeholder="https://moa-engineers.midasit.com/civil"
+                  />
+                </label>
+                <label className="field">
+                  <span>MAPI-Key</span>
+                  <input
+                    value={apiKey}
+                    onChange={(event) => setApiKey(event.target.value)}
+                    type="password"
+                    placeholder="MAPI-Key 입력"
+                  />
+                </label>
+                <div className="settings-actions">
+                  <button onClick={() => void testConnection()} disabled={isBusy}>
+                    연결 테스트
                   </button>
-                ))}
+                </div>
               </div>
             </section>
-          ))}
+
+            <section className="settings-block settings-block-secondary">
+              <div className="settings-block-header">
+                <div>
+                  <h3>스키마 설정</h3>
+                  <p>스키마 파일을 저장하거나 확인할 폴더를 지정합니다.</p>
+                </div>
+              </div>
+              <div className="schema-row">
+                <div className="schema-summary">
+                  <strong>스키마 저장 폴더</strong>
+                  <span>{schemaFolderPath || "아직 선택되지 않았습니다."}</span>
+                </div>
+                <div className="schema-actions">
+                  <button type="button" className="ghost-button" onClick={() => void chooseSchemaFolder()}>
+                    스키마 폴더 선택
+                  </button>
+                  <button
+                    type="button"
+                    className="ghost-button"
+                    onClick={() => void openSchemaFolder()}
+                    disabled={!schemaFolderPath}
+                  >
+                    스키마 폴더 열기
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        ) : null}
+      </section>
+
+      <main className={`workspace ${panelState.sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
+        <aside className="sidebar card">
+          <div className="section-header compact">
+            <div>
+              <h2>DB 목록</h2>
+              <p>엔드포인트를 선택합니다.</p>
+            </div>
+            <button type="button" className="ghost-button" onClick={() => setPanelOpen("sidebarOpen", !panelState.sidebarOpen)}>
+              {panelState.sidebarOpen ? "접기" : "열기"}
+            </button>
+          </div>
+          {panelState.sidebarOpen ? (
+            <div className="sidebar-body">
+              <label className="field sidebar-search">
+                <span>검색</span>
+                <input
+                  value={endpointSearch}
+                  onChange={(event) => setEndpointSearch(event.target.value)}
+                  placeholder="FBLA, STLD, CNLD..."
+                />
+              </label>
+              <div className="db-group-list">
+                {filteredDefinitions.length === 0 ? (
+                  <div className="empty-state">검색 결과가 없습니다.</div>
+                ) : (
+                  filteredDefinitions.map((item) => (
+                    <button
+                      key={item.endpoint}
+                      className={item.endpoint === selectedEndpoint ? "db-item active" : "db-item"}
+                      onClick={() => setSelectedEndpoint(item.endpoint as DbEndpointId)}
+                    >
+                      <strong>{item.label}</strong>
+                      <span>{item.description}</span>
+                      <small>{item.path}</small>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="sidebar-collapsed-label">DB</div>
+          )}
         </aside>
 
         <section className="content">
-          <div className="content-top">
-            <div className="panel-title card">
-              <h2>{definition.label}</h2>
-              <p>
-                {definition.description} / <code>{definition.path}</code>
-              </p>
-            </div>
-            <div className="panel-title card">
-              <h2>입력 규칙</h2>
-              <p>
-                빈 값은 payload에서 제외됩니다. boolean은 <code>true/false</code>, <code>1/0</code>, <code>yes/no</code>를 허용합니다.
-              </p>
-            </div>
-          </div>
-
           <div className="grid-panel card">
             <div className="grid-actions">
               <button onClick={addRow}>행 추가</button>
@@ -339,34 +407,73 @@ const App = () => {
             </div>
           </div>
 
-          <div className="bottom-panels">
-            <section className="card preview-panel">
-              <div className="panel-title">
-                <h2>JSON 미리보기</h2>
-                <p>현재 입력값을 MIDAS API 형식으로 변환한 결과입니다.</p>
+          <section className={`collapsible card ${messagePulse ? "message-pulse" : ""}`}>
+            <div className="section-header">
+              <div>
+                <h2>알림</h2>
+                <p>연결 상태, 스키마 생성, 요청 완료 같은 작업 메시지를 표시합니다.</p>
               </div>
-              <pre>{jsonPreview}</pre>
-            </section>
-
-            <section className="card issue-panel">
-              <div className="panel-title">
-                <h2>검증 결과</h2>
-                <p>형식 오류 셀은 빨간색으로 표시됩니다.</p>
-              </div>
-              <div className="issue-list">
-                {issues.length === 0 ? (
-                  <div className="empty-state">현재 형식 오류가 없습니다.</div>
+              <button type="button" className="ghost-button" onClick={() => setPanelOpen("alertOpen", !panelState.alertOpen)}>
+                {panelState.alertOpen ? "접기" : "열기"}
+              </button>
+            </div>
+            {panelState.alertOpen ? (
+              <div className="section-body">
+                {resultMessage ? (
+                  <div className={`top-banner tone-${resultMessage.tone}`}>{resultMessage.text}</div>
                 ) : (
-                  issues.map((issue) => (
-                    <div key={issue.rowId} className="issue-item">
-                      <strong>{issue.rowId}</strong>
-                      <span>
-                        {issue.cells.map((cell) => `${cell.fieldKey}: ${cell.message}`).join(" / ")}
-                      </span>
-                    </div>
-                  ))
+                  <div className="empty-state">표시할 알림이 없습니다.</div>
                 )}
               </div>
+            ) : null}
+          </section>
+
+          <div className="bottom-panels">
+            <section className="collapsible card">
+              <div className="section-header">
+                <div>
+                  <h2>Payload 미리보기</h2>
+                  <p>현재 입력값이 실제 전송 payload로 어떻게 변환되는지 확인합니다.</p>
+                </div>
+                <button type="button" className="ghost-button" onClick={() => setPanelOpen("previewOpen", !panelState.previewOpen)}>
+                  {panelState.previewOpen ? "접기" : "열기"}
+                </button>
+              </div>
+              {panelState.previewOpen ? (
+                <div className="section-body preview-panel">
+                  <pre>{jsonPreview}</pre>
+                </div>
+              ) : null}
+            </section>
+
+            <section className="collapsible card">
+              <div className="section-header">
+                <div>
+                  <h2>검증 결과</h2>
+                  <p>형식 오류가 있는 셀과 행을 확인합니다.</p>
+                </div>
+                <button type="button" className="ghost-button" onClick={() => setPanelOpen("validationOpen", !panelState.validationOpen)}>
+                  {panelState.validationOpen ? "접기" : "열기"}
+                </button>
+              </div>
+              {panelState.validationOpen ? (
+                <div className="section-body issue-panel">
+                  <div className="issue-list">
+                    {issues.length === 0 ? (
+                      <div className="empty-state">현재 형식 오류가 없습니다.</div>
+                    ) : (
+                      issues.map((issue) => (
+                        <div key={issue.rowId} className="issue-item">
+                          <strong>{issue.rowId}</strong>
+                          <span>
+                            {issue.cells.map((cell) => `${cell.fieldKey}: ${cell.message}`).join(" / ")}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ) : null}
             </section>
           </div>
         </section>

@@ -74,10 +74,19 @@ export interface RequestFailure {
 
 export type RequestResult = RequestSuccess | RequestFailure;
 
+export interface PanelStateSettings {
+  sidebarOpen: boolean;
+  settingsOpen: boolean;
+  alertOpen: boolean;
+  previewOpen: boolean;
+  validationOpen: boolean;
+}
+
 export interface AppSettings {
   baseUrl: string;
   apiKey: string;
   schemaFolderPath: string;
+  panelState: PanelStateSettings;
 }
 
 export type AppSettingsPatch = Partial<AppSettings>;
