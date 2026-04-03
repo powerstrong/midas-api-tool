@@ -1,9 +1,25 @@
-﻿import { app, BrowserWindow, ipcMain } from "electron";
+﻿import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
 import path from "node:path";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import axios from "axios";
-import { DB_BY_ENDPOINT, RequestInput, RequestResult } from "../src/shared/midas";
+import {
+  AppSettings,
+  AppSettingsPatch,
+  DB_BY_ENDPOINT,
+  FolderSelectionResult,
+  RequestInput,
+  RequestResult
+} from "../src/shared/midas";
+import { createSchemaExportData, createSchemaMarkdown } from "../src/shared/schema-docs";
 
 const isDev = !app.isPackaged;
+const settingsFilePath = path.join(app.getPath("userData"), "settings.json");
+
+const defaultSettings = (): AppSettings => ({
+  baseUrl: "",
+  apiKey: "",
+  schemaFolderPath: ""
+});
 
 const sanitizeBaseUrl = (value: string) => value.trim().replace(/\/+$/, "");
 
@@ -14,6 +30,71 @@ const isAllowedUrl = (baseUrl: string, requestUrl: string) => {
     return base.origin === target.origin;
   } catch {
     return false;
+  }
+};
+
+const readSettings = async (): Promise<AppSettings> => {
+  try {
+    const raw = await readFile(settingsFilePath, "utf8");
+    const parsed = JSON.parse(raw) as Partial<AppSettings>;
+    return {
+      baseUrl: parsed.baseUrl ?? "",
+      apiKey: parsed.apiKey ?? "",
+      schemaFolderPath: parsed.schemaFolderPath ?? ""
+    };
+  } catch {
+    return defaultSettings();
+  }
+};
+
+const writeSettings = async (patch: AppSettingsPatch) => {
+  const current = await readSettings();
+  const next: AppSettings = {
+    ...current,
+    ...patch
+  };
+
+  await mkdir(path.dirname(settingsFilePath), { recursive: true });
+  await writeFile(settingsFilePath, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  return next;
+};
+
+const exportSchemaFiles = async (schemaFolderPath: string) => {
+  if (!schemaFolderPath) {
+    return;
+  }
+
+  await mkdir(schemaFolderPath, { recursive: true });
+
+  await Promise.all([
+    writeFile(
+      path.join(schemaFolderPath, "db-schema.json"),
+      `${JSON.stringify(createSchemaExportData(), null, 2)}\n`,
+      "utf8"
+    ),
+    writeFile(
+      path.join(schemaFolderPath, "db-schema-ko.md"),
+      `${createSchemaMarkdown()}\n`,
+      "utf8"
+    )
+  ]);
+};
+
+const schemaJsonPath = (folderPath: string) => path.join(folderPath, "db-schema.json");
+
+const ensureSchemaFilesIfNeeded = async (folderPath: string) => {
+  if (!folderPath) {
+    return { created: false };
+  }
+
+  await mkdir(folderPath, { recursive: true });
+
+  try {
+    await access(schemaJsonPath(folderPath));
+    return { created: false };
+  } catch {
+    await exportSchemaFiles(folderPath);
+    return { created: true };
   }
 };
 
@@ -42,6 +123,53 @@ const createWindow = async () => {
     await win.loadFile(path.join(__dirname, "../../dist/index.html"));
   }
 };
+
+ipcMain.handle("midas:load-settings", async () => readSettings());
+
+ipcMain.handle("midas:update-settings", async (_event, patch: AppSettingsPatch) => {
+  const next = await writeSettings(patch);
+  if (patch.schemaFolderPath !== undefined && next.schemaFolderPath) {
+    await ensureSchemaFilesIfNeeded(next.schemaFolderPath);
+  }
+  return next;
+});
+
+ipcMain.handle("midas:choose-schema-folder", async (): Promise<FolderSelectionResult> => {
+  const current = await readSettings();
+  const result = await dialog.showOpenDialog({
+    title: "스키마 저장 폴더 선택",
+    defaultPath: current.schemaFolderPath || app.getPath("documents"),
+    properties: ["openDirectory", "createDirectory"]
+  });
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return { settings: current };
+  }
+
+  const folderPath = result.filePaths[0];
+  const next = await writeSettings({ schemaFolderPath: folderPath });
+  const schemaResult = await ensureSchemaFilesIfNeeded(next.schemaFolderPath);
+
+  if (schemaResult.created) {
+    return {
+      settings: next,
+      message: "스키마 파일이 없어 기본 파일을 생성했습니다."
+    };
+  }
+
+  return { settings: next };
+});
+
+ipcMain.handle("midas:open-schema-folder", async () => {
+  const current = await readSettings();
+  if (!current.schemaFolderPath) {
+    return "";
+  }
+
+  await mkdir(current.schemaFolderPath, { recursive: true });
+  await ensureSchemaFilesIfNeeded(current.schemaFolderPath);
+  return shell.openPath(current.schemaFolderPath);
+});
 
 ipcMain.handle("midas:request", async (_event, input: RequestInput): Promise<RequestResult> => {
   const baseUrl = sanitizeBaseUrl(input.baseUrl);

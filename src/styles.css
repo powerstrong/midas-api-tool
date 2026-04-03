@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   color-scheme: dark;
   font-family: "Segoe UI", "Noto Sans KR", sans-serif;
   background:
@@ -119,10 +119,30 @@ code {
 }
 
 .security-note {
-  max-width: 560px;
+  max-width: 620px;
   color: #c2d4f2;
   line-height: 1.55;
   font-size: 14px;
+}
+
+.security-note p {
+  margin: 0;
+}
+
+.security-note p + p {
+  margin-top: 10px;
+}
+
+.schema-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.ghost-button {
+  background: rgba(11, 18, 32, 0.58);
+  border-color: rgba(87, 123, 180, 0.5);
 }
 
 .connection-grid {
@@ -141,18 +161,6 @@ code {
 .field span {
   color: #b9cbea;
   font-size: 13px;
-}
-
-.checkbox {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  color: #b6cae8;
-  font-size: 14px;
-}
-
-.checkbox input {
-  width: auto;
 }
 
 .connection-actions {
@@ -185,6 +193,11 @@ code {
 .status-error {
   background: rgba(239, 68, 68, 0.18);
   color: #ff9b9b;
+}
+
+.top-banner {
+  border-radius: 14px;
+  padding: 12px 14px;
 }
 
 .workspace {
@@ -373,3 +386,4 @@ code {
     justify-self: start;
   }
 }
+

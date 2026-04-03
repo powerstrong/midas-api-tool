@@ -74,13 +74,18 @@ export interface RequestFailure {
 
 export type RequestResult = RequestSuccess | RequestFailure;
 
-export interface SavedConnection {
+export interface AppSettings {
   baseUrl: string;
   apiKey: string;
-  persistApiKey: boolean;
+  schemaFolderPath: string;
 }
 
-export const STORAGE_KEY = "midas-api-tool.connection";
+export type AppSettingsPatch = Partial<AppSettings>;
+
+export interface FolderSelectionResult {
+  settings: AppSettings;
+  message?: string;
+}
 
 const distributionOptions = [
   { value: "1", label: "One Way" },

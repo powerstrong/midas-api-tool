@@ -29,7 +29,7 @@ const App = () => {
   const {
     baseUrl,
     apiKey,
-    persistApiKey,
+    schemaFolderPath,
     connectionState,
     selectedEndpoint,
     rows,
@@ -40,7 +40,8 @@ const App = () => {
     initialize,
     setBaseUrl,
     setApiKey,
-    setPersistApiKey,
+    chooseSchemaFolder,
+    openSchemaFolder,
     setSelectedEndpoint,
     setRows,
     addRow,
@@ -53,7 +54,7 @@ const App = () => {
   } = useAppStore();
 
   useEffect(() => {
-    initialize();
+    void initialize();
   }, [initialize]);
 
   const definition = getSelectedDefinition(selectedEndpoint);
@@ -202,8 +203,24 @@ const App = () => {
           </div>
 
           <div className="security-note">
-            이 프로그램은 사용자의 MIDAS API 정보를 외부 서버로 전송하지 않습니다.
-            모든 요청은 사용자의 컴퓨터에서 직접 MIDAS API 서버로 전송됩니다.
+            <p>
+              이 프로그램은 사용자의 MIDAS API 정보를 외부 서버로 전송하지 않습니다.
+              모든 요청은 사용자의 컴퓨터에서 직접 MIDAS API 서버로 전송됩니다.
+            </p>
+            <p>스키마 저장 폴더: {schemaFolderPath || "아직 선택되지 않았습니다."}</p>
+            <div className="schema-actions">
+              <button type="button" className="ghost-button" onClick={() => void chooseSchemaFolder()}>
+                스키마 폴더 선택
+              </button>
+              <button
+                type="button"
+                className="ghost-button"
+                onClick={() => void openSchemaFolder()}
+                disabled={!schemaFolderPath}
+              >
+                스키마 폴더 열기
+              </button>
+            </div>
           </div>
         </div>
 
@@ -229,19 +246,15 @@ const App = () => {
             <button onClick={() => void testConnection()} disabled={isBusy}>
               연결 테스트
             </button>
-            <label className="checkbox">
-              <input
-                checked={persistApiKey}
-                onChange={(event) => setPersistApiKey(event.target.checked)}
-                type="checkbox"
-              />
-              <span>로컬 저장 허용</span>
-            </label>
           </div>
           <div className={`status-chip status-${connectionState}`}>
             상태: {connectionLabelMap[connectionState]}
           </div>
         </div>
+
+        {resultMessage ? (
+          <div className={`top-banner tone-${resultMessage.tone}`}>{resultMessage.text}</div>
+        ) : null}
       </header>
 
       <main className="workspace">
@@ -354,9 +367,6 @@ const App = () => {
                   ))
                 )}
               </div>
-              {resultMessage ? (
-                <div className={`result-banner tone-${resultMessage.tone}`}>{resultMessage.text}</div>
-              ) : null}
             </section>
           </div>
         </section>

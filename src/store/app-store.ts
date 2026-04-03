@@ -1,11 +1,10 @@
 ﻿import { create } from "zustand";
 import {
+  AppSettings,
   DB_BY_ENDPOINT,
   DbEndpointId,
   GridRow,
-  RowIssue,
-  STORAGE_KEY,
-  SavedConnection
+  RowIssue
 } from "../shared/midas";
 import { buildPayload, createBlankRow, rowsFromGetResponse } from "../lib/transformers";
 
@@ -19,7 +18,7 @@ interface ResultMessage {
 interface AppState {
   baseUrl: string;
   apiKey: string;
-  persistApiKey: boolean;
+  schemaFolderPath: string;
   connectionState: ConnectionState;
   selectedEndpoint: DbEndpointId;
   rows: GridRow[];
@@ -28,10 +27,11 @@ interface AppState {
   selectedRowIds: string[];
   resultMessage?: ResultMessage;
   isBusy: boolean;
-  initialize: () => void;
+  initialize: () => Promise<void>;
   setBaseUrl: (value: string) => void;
   setApiKey: (value: string) => void;
-  setPersistApiKey: (value: boolean) => void;
+  chooseSchemaFolder: () => Promise<void>;
+  openSchemaFolder: () => Promise<void>;
   setSelectedEndpoint: (value: DbEndpointId) => void;
   setRows: (rows: GridRow[]) => void;
   upsertRow: (rowId: string, patch: Partial<GridRow>) => void;
@@ -45,14 +45,6 @@ interface AppState {
   submit: (method: "POST" | "PUT") => Promise<void>;
 }
 
-const persistConnection = (payload: SavedConnection) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-};
-
-const removePersistedConnection = () => {
-  localStorage.removeItem(STORAGE_KEY);
-};
-
 const getNextKeySeed = (rows: GridRow[]) => {
   const numericKeys = rows
     .map((row) => Number(row.KEY))
@@ -63,10 +55,18 @@ const getNextKeySeed = (rows: GridRow[]) => {
 
 const getInitialRows = (endpoint: DbEndpointId) => [createBlankRow(endpoint, 1)];
 
+const syncSettings = (settings: AppSettings, set: (partial: Partial<AppState>) => void) => {
+  set({
+    baseUrl: settings.baseUrl,
+    apiKey: settings.apiKey,
+    schemaFolderPath: settings.schemaFolderPath
+  });
+};
+
 export const useAppStore = create<AppState>((set, get) => ({
   baseUrl: "",
   apiKey: "",
-  persistApiKey: false,
+  schemaFolderPath: "",
   connectionState: "idle",
   selectedEndpoint: "FBLA",
   rows: getInitialRows("FBLA"),
@@ -75,60 +75,28 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedRowIds: [],
   resultMessage: undefined,
   isBusy: false,
-  initialize: () => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      get().refreshPreview();
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(raw) as SavedConnection;
-      set({
-        baseUrl: parsed.baseUrl ?? "",
-        apiKey: parsed.persistApiKey ? parsed.apiKey ?? "" : "",
-        persistApiKey: Boolean(parsed.persistApiKey)
-      });
-    } catch {
-      removePersistedConnection();
-    }
-
+  initialize: async () => {
+    const settings = await window.midasBridge.loadSettings();
+    syncSettings(settings, set);
     get().refreshPreview();
   },
   setBaseUrl: (value) => {
     set({ baseUrl: value });
-    const state = get();
-    if (state.persistApiKey) {
-      persistConnection({
-        baseUrl: value,
-        apiKey: state.apiKey,
-        persistApiKey: true
-      });
-    }
+    void window.midasBridge.updateSettings({ baseUrl: value });
   },
   setApiKey: (value) => {
     set({ apiKey: value });
-    const state = get();
-    if (state.persistApiKey) {
-      persistConnection({
-        baseUrl: state.baseUrl,
-        apiKey: value,
-        persistApiKey: true
-      });
+    void window.midasBridge.updateSettings({ apiKey: value });
+  },
+  chooseSchemaFolder: async () => {
+    const result = await window.midasBridge.chooseSchemaFolder();
+    syncSettings(result.settings, set);
+    if (result.message) {
+      set({ resultMessage: { tone: "neutral", text: result.message } });
     }
   },
-  setPersistApiKey: (value) => {
-    set({ persistApiKey: value });
-    const state = get();
-    if (value) {
-      persistConnection({
-        baseUrl: state.baseUrl,
-        apiKey: state.apiKey,
-        persistApiKey: true
-      });
-    } else {
-      removePersistedConnection();
-    }
+  openSchemaFolder: async () => {
+    await window.midasBridge.openSchemaFolder();
   },
   setSelectedEndpoint: (value) => {
     set({
