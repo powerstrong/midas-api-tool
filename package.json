@@ -1,0 +1,32 @@
+{
+  "name": "midas-api-tool",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist-electron/src-electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k -n tsc,vite,electron \"tsc -p tsconfig.electron.json --watch\" \"vite\" \"wait-on tcp:5173 file:dist-electron/src-electron/main.js && electron .\"",
+    "start": "npm run dev",
+    "build": "tsc -p tsconfig.electron.json && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "ag-grid-community": "^33.2.4",
+    "ag-grid-react": "^33.2.4",
+    "axios": "^1.9.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zustand": "^5.0.3",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.2",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "concurrently": "^9.1.2",
+    "electron": "^35.1.5",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.2",
+    "wait-on": "^8.0.3"
+  }
+}

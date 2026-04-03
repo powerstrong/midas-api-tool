@@ -1,0 +1,375 @@
+:root {
+  color-scheme: dark;
+  font-family: "Segoe UI", "Noto Sans KR", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(66, 153, 225, 0.22), transparent 30%),
+    radial-gradient(circle at top right, rgba(20, 184, 166, 0.16), transparent 28%),
+    linear-gradient(180deg, #08111f 0%, #0d1526 42%, #0a1020 100%);
+  color: #e5eefb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 1px solid #2a3b59;
+  background: linear-gradient(180deg, #1f3555 0%, #17263d 100%);
+  color: #eef5ff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  border-color: #4b76b0;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+  transform: none;
+}
+
+input {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 1px solid #2b3952;
+  background: rgba(11, 18, 32, 0.88);
+  color: #eff6ff;
+}
+
+code {
+  font-family: "Cascadia Code", "Consolas", monospace;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  gap: 16px;
+  padding: 18px;
+}
+
+.card {
+  border: 1px solid rgba(84, 110, 152, 0.28);
+  background: rgba(10, 16, 31, 0.78);
+  backdrop-filter: blur(20px);
+  border-radius: 22px;
+  box-shadow: 0 20px 60px rgba(2, 6, 23, 0.32);
+}
+
+.topbar {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.topbar-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.brand {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: 0.02em;
+}
+
+.brand p {
+  margin: 4px 0 0;
+  color: #9ab0d2;
+}
+
+.brand-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #38bdf8 0%, #2dd4bf 100%);
+  color: #062033;
+}
+
+.security-note {
+  max-width: 560px;
+  color: #c2d4f2;
+  line-height: 1.55;
+  font-size: 14px;
+}
+
+.connection-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 2fr) minmax(220px, 1.2fr) auto auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field span {
+  color: #b9cbea;
+  font-size: 13px;
+}
+
+.checkbox {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: #b6cae8;
+  font-size: 14px;
+}
+
+.checkbox input {
+  width: auto;
+}
+
+.connection-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.status-chip {
+  justify-self: end;
+  align-self: center;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-weight: 700;
+  min-width: 110px;
+  text-align: center;
+}
+
+.status-idle {
+  background: rgba(71, 85, 105, 0.2);
+  color: #d3dce8;
+}
+
+.status-success {
+  background: rgba(16, 185, 129, 0.18);
+  color: #7ef0c4;
+}
+
+.status-error {
+  background: rgba(239, 68, 68, 0.18);
+  color: #ff9b9b;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 16px;
+  min-height: 0;
+  flex: 1;
+}
+
+.sidebar {
+  padding: 18px;
+}
+
+.panel-title h2,
+.panel-title h3,
+.db-group h3 {
+  margin: 0;
+}
+
+.panel-title p {
+  margin: 6px 0 0;
+  color: #94a9c8;
+  line-height: 1.5;
+}
+
+.db-group {
+  margin-top: 22px;
+}
+
+.db-group h3 {
+  margin-bottom: 10px;
+  color: #dce9fb;
+}
+
+.db-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.db-item {
+  text-align: left;
+  padding: 14px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.db-item strong {
+  font-size: 15px;
+}
+
+.db-item span,
+.db-item small {
+  color: #9bb0cf;
+}
+
+.db-item.active {
+  border-color: #4cc9f0;
+  background: linear-gradient(180deg, rgba(21, 47, 78, 0.95), rgba(14, 26, 45, 0.95));
+  box-shadow: inset 0 0 0 1px rgba(76, 201, 240, 0.26);
+}
+
+.content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.content-top {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 16px;
+}
+
+.content-top .card,
+.preview-panel,
+.issue-panel {
+  padding: 16px 18px;
+}
+
+.grid-panel {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 420px;
+}
+
+.grid-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ag-wrap {
+  min-height: 440px;
+  flex: 1;
+}
+
+.bottom-panels {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 16px;
+}
+
+.preview-panel pre {
+  margin: 14px 0 0;
+  padding: 16px;
+  border-radius: 16px;
+  background: #08111f;
+  border: 1px solid #21324c;
+  min-height: 240px;
+  overflow: auto;
+  color: #d6e6ff;
+}
+
+.issue-list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.issue-item,
+.empty-state,
+.result-banner {
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.issue-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+.empty-state {
+  background: rgba(35, 51, 76, 0.4);
+  color: #aec4e5;
+}
+
+.result-banner {
+  margin-top: 14px;
+}
+
+.tone-success {
+  background: rgba(16, 185, 129, 0.16);
+  color: #8ef6ce;
+}
+
+.tone-error {
+  background: rgba(239, 68, 68, 0.16);
+  color: #ffb2b2;
+}
+
+.tone-neutral {
+  background: rgba(59, 130, 246, 0.16);
+  color: #b4d2ff;
+}
+
+.cell-error {
+  background: rgba(239, 68, 68, 0.16) !important;
+  box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.55);
+}
+
+.row-has-issue .ag-cell:first-child {
+  border-left: 2px solid rgba(248, 113, 113, 0.7);
+}
+
+@media (max-width: 1240px) {
+  .workspace,
+  .bottom-panels,
+  .content-top,
+  .connection-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .status-chip {
+    justify-self: start;
+  }
+}
