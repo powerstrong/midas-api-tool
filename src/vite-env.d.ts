@@ -12,8 +12,11 @@ declare global {
       ) => Promise<import("./shared/midas").AppSettings>;
       chooseSchemaFolder: () => Promise<import("./shared/midas").FolderSelectionResult>;
       openSchemaFolder: () => Promise<string>;
+      openExternal: (url: string) => Promise<string>;
     };
   }
 }
 
 export {};
+
+

@@ -16,5 +16,10 @@ contextBridge.exposeInMainWorld("midasBridge", {
   },
   openSchemaFolder(): Promise<string> {
     return ipcRenderer.invoke("midas:open-schema-folder");
-  }
+  },
+  openExternal(url: string): Promise<string> {
+    return ipcRenderer.invoke("midas:open-external", url);
+  },
 });
+
+

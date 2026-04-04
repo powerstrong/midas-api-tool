@@ -267,7 +267,7 @@ code {
 
 .settings-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 2fr) minmax(220px, 1.2fr) auto;
+  grid-template-columns: minmax(240px, 1.7fr) minmax(200px, 1fr);
   gap: 14px;
   align-items: end;
 }
@@ -283,12 +283,21 @@ code {
   font-size: 14px;
 }
 
+.settings-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
 .settings-actions {
   display: flex;
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
 }
+
+
 
 .schema-row {
   display: flex;
@@ -419,6 +428,22 @@ code {
   font-size: 14px;
   line-height: 1.35;
   word-break: keep-all;
+}
+
+.db-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.db-group h3 {
+  margin: 0;
+  color: #c8dbf5;
+  font-size: 13px;
+}
+
+.db-group-list-recent {
+  margin-bottom: 4px;
 }
 
 .db-group-list {
@@ -603,3 +628,11 @@ code {
     border-radius: 16px;
   }
 }
+
+
+
+
+
+
+
+

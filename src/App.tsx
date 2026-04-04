@@ -40,7 +40,6 @@ const App = () => {
   const {
     baseUrl,
     apiKey,
-    schemaFolderPath,
     panelState,
     recentEndpoints,
     connectionState,
@@ -52,8 +51,6 @@ const App = () => {
     initialize,
     setBaseUrl,
     setApiKey,
-    chooseSchemaFolder,
-    openSchemaFolder,
     setPanelOpen,
     setSelectedEndpoint,
     setRows,
@@ -70,6 +67,7 @@ const App = () => {
   useEffect(() => {
     void initialize();
   }, [initialize]);
+
 
   useEffect(() => {
     if (!resultMessage) {
@@ -155,27 +153,20 @@ const App = () => {
   );
 
   const sortedDefinitions = useMemo(() => {
-    const recentOrder = new Map(recentEndpoints.map((endpoint, index) => [endpoint, index]));
+    return [...DB_DEFINITIONS].sort((a, b) => a.endpoint.localeCompare(b.endpoint));
+  }, []);
 
-    return [...DB_DEFINITIONS].sort((a, b) => {
-      const aRecent = recentOrder.get(a.endpoint);
-      const bRecent = recentOrder.get(b.endpoint);
+  const recentDefinitions = useMemo(() => {
+    if (endpointSearch.trim()) {
+      return [];
+    }
 
-      if (aRecent !== undefined && bRecent !== undefined) {
-        return aRecent - bRecent;
-      }
-
-      if (aRecent !== undefined) {
-        return -1;
-      }
-
-      if (bRecent !== undefined) {
-        return 1;
-      }
-
-      return a.endpoint.localeCompare(b.endpoint);
-    });
-  }, [recentEndpoints]);
+    const recentMap = new Map(DB_DEFINITIONS.map((item) => [item.endpoint, item]));
+    return recentEndpoints
+      .slice(0, 1)
+      .map((endpoint) => recentMap.get(endpoint))
+      .filter((item): item is (typeof DB_DEFINITIONS)[number] => Boolean(item));
+  }, [endpointSearch, recentEndpoints]);
 
   const filteredDefinitions = useMemo(() => {
     const keyword = endpointSearch.trim().toLowerCase();
@@ -244,7 +235,7 @@ const App = () => {
         <div className="section-header">
           <div>
             <h2>작업 설정</h2>
-            <p>연결 정보와 스키마 저장 위치를 설정합니다.</p>
+            <p>연결 정보만 입력하면 바로 작업할 수 있습니다.</p>
           </div>
           <button type="button" className="ghost-button" onClick={() => setPanelOpen("settingsOpen", !panelState.settingsOpen)}>
             {panelState.settingsOpen ? "접기" : "열기"}
@@ -258,8 +249,13 @@ const App = () => {
                   <h3>연결 설정</h3>
                   <p>MIDAS API 요청에 사용할 주소와 인증 키를 입력합니다.</p>
                 </div>
-                <div className={`status-chip status-${connectionState}`}>
-                  상태: {connectionLabelMap[connectionState]}
+                <div className="settings-header-actions">
+                  <button onClick={() => void testConnection()} disabled={isBusy}>
+                    연결 테스트
+                  </button>
+                  <div className={`status-chip status-${connectionState}`}>
+                    {connectionLabelMap[connectionState]}
+                  </div>
                 </div>
               </div>
               <div className="settings-grid">
@@ -279,41 +275,7 @@ const App = () => {
                     type="password"
                     placeholder="MAPI-Key 입력"
                   />
-                </label>
-                <div className="settings-actions">
-                  <button onClick={() => void testConnection()} disabled={isBusy}>
-                    연결 테스트
-                  </button>
-                </div>
-              </div>
-            </section>
-
-            <section className="settings-block settings-block-secondary">
-              <div className="settings-block-header">
-                <div>
-                  <h3>스키마 설정</h3>
-                  <p>스키마 파일을 저장하거나 확인할 폴더를 지정합니다.</p>
-                </div>
-              </div>
-              <div className="schema-row">
-                <div className="schema-summary">
-                  <strong>스키마 저장 폴더</strong>
-                  <span>{schemaFolderPath || "아직 선택되지 않았습니다."}</span>
-                </div>
-                <div className="schema-actions">
-                  <button type="button" className="ghost-button" onClick={() => void chooseSchemaFolder()}>
-                    스키마 폴더 선택
-                  </button>
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    onClick={() => void openSchemaFolder()}
-                    disabled={!schemaFolderPath}
-                  >
-                    스키마 폴더 열기
-                  </button>
-                </div>
-              </div>
+                </label>              </div>
             </section>
           </div>
         ) : null}
@@ -340,23 +302,45 @@ const App = () => {
                   placeholder="FBLA, STLD, CNLD..."
                 />
               </label>
-              <div className="db-group-list">
-                {filteredDefinitions.length === 0 ? (
-                  <div className="empty-state">검색 결과가 없습니다.</div>
-                ) : (
-                  filteredDefinitions.map((item) => (
-                    <button
-                      key={item.endpoint}
-                      className={item.endpoint === selectedEndpoint ? "db-item active" : "db-item"}
-                      onClick={() => setSelectedEndpoint(item.endpoint as DbEndpointId)}
-                    >
-                      <strong>{item.label}</strong>
-                      <span>{item.description}</span>
-                      <small>{item.path}</small>
-                    </button>
-                  ))
-                )}
-              </div>
+              {recentDefinitions.length > 0 ? (
+                <section className="db-group">
+                  <h3>최근 사용</h3>
+                  <div className="db-group-list db-group-list-recent">
+                    {recentDefinitions.map((item) => (
+                      <button
+                        key={`recent-${item.endpoint}`}
+                        className={item.endpoint === selectedEndpoint ? "db-item active" : "db-item"}
+                        onClick={() => setSelectedEndpoint(item.endpoint as DbEndpointId)}
+                      >
+                        <strong>{item.label}</strong>
+                        <span>{item.description}</span>
+                        <small>{item.path}</small>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              <section className="db-group">
+                <h3>전체 목록</h3>
+                <div className="db-group-list">
+                  {filteredDefinitions.length === 0 ? (
+                    <div className="empty-state">검색 결과가 없습니다.</div>
+                  ) : (
+                    filteredDefinitions.map((item) => (
+                      <button
+                        key={item.endpoint}
+                        className={item.endpoint === selectedEndpoint ? "db-item active" : "db-item"}
+                        onClick={() => setSelectedEndpoint(item.endpoint as DbEndpointId)}
+                      >
+                        <strong>{item.label}</strong>
+                        <span>{item.description}</span>
+                        <small>{item.path}</small>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </section>
             </div>
           ) : (
             <>
@@ -385,3 +369,11 @@ const App = () => {
 };
 
 export default App;
+
+
+
+
+
+
+
+

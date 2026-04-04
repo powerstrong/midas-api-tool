@@ -127,6 +127,7 @@ const ensureSchemaFilesIfNeeded = async (folderPath: string) => {
   }
 };
 
+
 const createWindow = async () => {
   const appIconPath = path.join(app.getAppPath(), "public", "app-icon.png");
   const win = new BrowserWindow({
@@ -137,6 +138,7 @@ const createWindow = async () => {
     backgroundColor: "#0d1320",
     icon: appIconPath,
     show: false,
+    frame: true,
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -146,6 +148,16 @@ const createWindow = async () => {
   });
 
   win.removeMenu();
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    void shell.openExternal(url);
+    return { action: "deny" };
+  });
+  win.webContents.on("will-navigate", (event, url) => {
+    if (url !== win.webContents.getURL()) {
+      event.preventDefault();
+      void shell.openExternal(url);
+    }
+  });
   win.once("ready-to-show", () => {
     win.show();
   });
@@ -193,6 +205,9 @@ ipcMain.handle("midas:choose-schema-folder", async (): Promise<FolderSelectionRe
   return { settings: next };
 });
 
+ipcMain.handle("midas:open-external", async (_event, url: string) => {
+  return shell.openExternal(url);
+});
 ipcMain.handle("midas:open-schema-folder", async () => {
   const current = await readSettings();
   if (!current.schemaFolderPath) {
@@ -289,3 +304,7 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+
+
+
