@@ -508,23 +508,61 @@ code {
   padding-top: 2px;
 }
 
-.result-stack {
-  display: grid;
-  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
-  gap: 16px;
-  align-items: start;
+.result-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.result-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(84, 110, 152, 0.24);
+  background: rgba(12, 20, 38, 0.58);
+  color: #9db4d6;
+  box-shadow: none;
+}
+
+.result-tab:hover {
+  transform: none;
+  border-color: rgba(102, 146, 212, 0.42);
+  background: rgba(16, 26, 46, 0.76);
+}
+
+.result-tab.active {
+  color: #eef5ff;
+  border-color: rgba(102, 146, 212, 0.46);
+  background: linear-gradient(180deg, rgba(31, 53, 85, 0.94), rgba(23, 38, 61, 0.94));
+}
+
+.result-tab-badge {
+  min-width: 20px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.18);
+  color: #dbeafe;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.result-tab.tab-flash {
+  animation: tab-badge-flash 1.2s ease;
+}
+
+.result-tab.tab-flash .result-tab-badge {
+  animation: tab-badge-flash 1.2s ease;
 }
 
 .result-section {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.result-section-title {
-  margin: 0;
-  color: #d7e6fb;
-  font-size: 14px;
 }
 
 .issue-list {
@@ -587,6 +625,21 @@ code {
   }
 }
 
+@keyframes tab-badge-flash {
+  0% {
+    box-shadow: 0 0 0 rgba(96, 165, 250, 0);
+    filter: brightness(1);
+  }
+  35% {
+    box-shadow: 0 0 0 6px rgba(96, 165, 250, 0.14);
+    filter: brightness(1.18);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(96, 165, 250, 0);
+    filter: brightness(1);
+  }
+}
+
 .cell-error {
   background: rgba(239, 68, 68, 0.16) !important;
   box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.55);
@@ -628,6 +681,7 @@ code {
     border-radius: 16px;
   }
 }
+
 
 
 
