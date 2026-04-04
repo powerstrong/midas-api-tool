@@ -1,11 +1,12 @@
 ﻿import type { DbDefinition } from "../../../shared/midas";
+import { cnldHelp } from "../help/cnld";
 
 export const cnldDefinition: DbDefinition = {
   categoryId: "static-loads",
   categoryLabel: "Static Loads",
   endpoint: "CNLD",
   label: "CNLD",
-  description: "Nodal Loads",
+  description: cnldHelp.description,
   path: "db/CNLD",
   keyLabel: "NODE",
   fields: [

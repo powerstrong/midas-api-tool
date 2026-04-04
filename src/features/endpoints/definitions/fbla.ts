@@ -1,4 +1,5 @@
 ﻿import type { DbDefinition, FieldDefinition } from "../../../shared/midas";
+import { fblaHelp } from "../help/fbla";
 
 const distributionOptions = [
   { value: "1", label: "One Way" },
@@ -21,7 +22,7 @@ export const fblaDefinition: DbDefinition = {
   categoryLabel: "Static Loads",
   endpoint: "FBLA",
   label: "FBLA",
-  description: "Assign Floor Loads",
+  description: fblaHelp.description,
   path: "db/FBLA",
   keyLabel: "KEY",
   fields: [
@@ -52,7 +53,7 @@ export const fblaDefinition: DbDefinition = {
       label: "NODES",
       kind: "integer-array",
       placeholder: "101,102,103",
-      helperText: "쉼표로 구분한 절점 번호",
+      helperText: fblaHelp.fieldHelperText.NODES,
       width: 220
     }
   ]
