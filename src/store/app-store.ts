@@ -20,11 +20,11 @@ interface AppState {
   apiKey: string;
   schemaFolderPath: string;
   panelState: AppSettings["panelState"];
+  recentEndpoints: DbEndpointId[];
   connectionState: ConnectionState;
   selectedEndpoint: DbEndpointId;
   rows: GridRow[];
   issues: RowIssue[];
-  jsonPreview: string;
   selectedRowIds: string[];
   resultMessage?: ResultMessage;
   isBusy: boolean;
@@ -43,16 +43,14 @@ interface AppState {
   setSelectedRowIds: (rowIds: string[]) => void;
   testConnection: () => Promise<void>;
   loadCurrentData: () => Promise<void>;
-  refreshPreview: () => void;
+  refreshDerivedState: () => void;
   submit: (method: "POST" | "PUT") => Promise<void>;
 }
 
 const defaultPanelState: AppSettings["panelState"] = {
   sidebarOpen: true,
   settingsOpen: true,
-  alertOpen: true,
-  previewOpen: false,
-  validationOpen: true
+  alertOpen: true
 };
 
 const getNextKeySeed = (rows: GridRow[]) => {
@@ -65,12 +63,17 @@ const getNextKeySeed = (rows: GridRow[]) => {
 
 const getInitialRows = (endpoint: DbEndpointId) => [createBlankRow(endpoint, 1)];
 
+const buildRecentEndpoints = (selectedEndpoint: DbEndpointId, recentEndpoints: DbEndpointId[]) => {
+  return [selectedEndpoint, ...recentEndpoints.filter((endpoint) => endpoint !== selectedEndpoint)];
+};
+
 const syncSettings = (settings: AppSettings, set: (partial: Partial<AppState>) => void) => {
   set({
     baseUrl: settings.baseUrl,
     apiKey: settings.apiKey,
     schemaFolderPath: settings.schemaFolderPath,
-    panelState: settings.panelState ?? defaultPanelState
+    panelState: settings.panelState ?? defaultPanelState,
+    recentEndpoints: settings.recentEndpoints ?? []
   });
 };
 
@@ -79,18 +82,18 @@ export const useAppStore = create<AppState>((set, get) => ({
   apiKey: "",
   schemaFolderPath: "",
   panelState: defaultPanelState,
+  recentEndpoints: [],
   connectionState: "idle",
   selectedEndpoint: "FBLA",
   rows: getInitialRows("FBLA"),
   issues: [],
-  jsonPreview: JSON.stringify({ Assign: { "1": {} } }, null, 2),
   selectedRowIds: [],
   resultMessage: undefined,
   isBusy: false,
   initialize: async () => {
     const settings = await window.midasBridge.loadSettings();
     syncSettings(settings, set);
-    get().refreshPreview();
+    get().refreshDerivedState();
   },
   setBaseUrl: (value) => {
     set({ baseUrl: value });
@@ -116,24 +119,27 @@ export const useAppStore = create<AppState>((set, get) => ({
     void window.midasBridge.updateSettings({ panelState: nextPanelState });
   },
   setSelectedEndpoint: (value) => {
+    const nextRecentEndpoints = buildRecentEndpoints(value, get().recentEndpoints);
     set({
       selectedEndpoint: value,
+      recentEndpoints: nextRecentEndpoints,
       rows: getInitialRows(value),
       selectedRowIds: [],
       issues: [],
       resultMessage: undefined
     });
-    get().refreshPreview();
+    void window.midasBridge.updateSettings({ recentEndpoints: nextRecentEndpoints });
+    get().refreshDerivedState();
   },
   setRows: (rows) => {
     set({ rows });
-    get().refreshPreview();
+    get().refreshDerivedState();
   },
   upsertRow: (rowId, patch) => {
     set((state) => ({
       rows: state.rows.map((row) => (row.__rowId === rowId ? { ...row, ...patch } : row))
     }));
-    get().refreshPreview();
+    get().refreshDerivedState();
   },
   addRow: () => {
     const state = get();
@@ -141,7 +147,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       rows: [...state.rows, createBlankRow(state.selectedEndpoint, seed)]
     });
-    get().refreshPreview();
+    get().refreshDerivedState();
   },
   deleteSelectedRows: () => {
     const state = get();
@@ -150,7 +156,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       rows: remaining.length > 0 ? remaining : getInitialRows(state.selectedEndpoint),
       selectedRowIds: []
     });
-    get().refreshPreview();
+    get().refreshDerivedState();
   },
   clearSelectedCells: (cellPositions) => {
     const grouped = new Map<string, Set<string>>();
@@ -176,7 +182,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         return next;
       })
     }));
-    get().refreshPreview();
+    get().refreshDerivedState();
   },
   setSelectedRowIds: (rowIds) => set({ selectedRowIds: rowIds }),
   testConnection: async () => {
@@ -228,14 +234,13 @@ export const useAppStore = create<AppState>((set, get) => ({
         text: `현재 데이터를 불러왔습니다. (${rows.length}행)`
       }
     });
-    get().refreshPreview();
+    get().refreshDerivedState();
   },
-  refreshPreview: () => {
+  refreshDerivedState: () => {
     const state = get();
     const preview = buildPayload(state.selectedEndpoint, state.rows);
     set({
-      issues: preview.issues,
-      jsonPreview: JSON.stringify(preview.payload, null, 2)
+      issues: preview.issues
     });
   },
   submit: async (method) => {
@@ -243,7 +248,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     const preview = buildPayload(state.selectedEndpoint, state.rows);
     set({
       issues: preview.issues,
-      jsonPreview: JSON.stringify(preview.payload, null, 2),
       isBusy: true,
       resultMessage: undefined
     });

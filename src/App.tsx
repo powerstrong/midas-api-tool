@@ -33,11 +33,11 @@ const App = () => {
     apiKey,
     schemaFolderPath,
     panelState,
+    recentEndpoints,
     connectionState,
     selectedEndpoint,
     rows,
     issues,
-    jsonPreview,
     resultMessage,
     isBusy,
     initialize,
@@ -199,8 +199,27 @@ const App = () => {
   };
 
   const sortedDefinitions = useMemo(() => {
-    return [...DB_DEFINITIONS].sort((a, b) => a.endpoint.localeCompare(b.endpoint));
-  }, []);
+    const recentOrder = new Map(recentEndpoints.map((endpoint, index) => [endpoint, index]));
+
+    return [...DB_DEFINITIONS].sort((a, b) => {
+      const aRecent = recentOrder.get(a.endpoint);
+      const bRecent = recentOrder.get(b.endpoint);
+
+      if (aRecent !== undefined && bRecent !== undefined) {
+        return aRecent - bRecent;
+      }
+
+      if (aRecent !== undefined) {
+        return -1;
+      }
+
+      if (bRecent !== undefined) {
+        return 1;
+      }
+
+      return a.endpoint.localeCompare(b.endpoint);
+    });
+  }, [recentEndpoints]);
 
   const filteredDefinitions = useMemo(() => {
     const keyword = endpointSearch.trim().toLowerCase();
@@ -209,7 +228,7 @@ const App = () => {
     }
 
     return sortedDefinitions.filter((item) => {
-      const haystack = `${item.endpoint} ${item.label} ${item.description} ${item.path}`.toLowerCase();
+      const haystack = `${item.endpoint} ${item.label} ${item.description}`.toLowerCase();
       return haystack.includes(keyword);
     });
   }, [endpointSearch, sortedDefinitions]);
@@ -324,11 +343,11 @@ const App = () => {
       </section>
 
       <main className={`workspace ${panelState.sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
-        <aside className="sidebar card">
-          <div className="section-header compact">
+        <aside className={`sidebar card ${panelState.sidebarOpen ? "" : "sidebar-collapsed"}`.trim()}>
+          <div className={`section-header compact ${panelState.sidebarOpen ? "" : "collapsed"}`.trim()}>
             <div>
               <h2>DB 목록</h2>
-              <p>엔드포인트를 선택합니다.</p>
+              <p>DB 엔드포인트를 선택합니다.</p>
             </div>
             <button type="button" className="ghost-button" onClick={() => setPanelOpen("sidebarOpen", !panelState.sidebarOpen)}>
               {panelState.sidebarOpen ? "접기" : "열기"}
@@ -363,7 +382,13 @@ const App = () => {
               </div>
             </div>
           ) : (
-            <div className="sidebar-collapsed-label">DB</div>
+            <>
+              <div className="sidebar-collapsed-title">DB<br />목록</div>
+              <div className="sidebar-collapsed-current">
+                <div className="sidebar-collapsed-label">{selectedEndpoint}</div>
+                <div className="sidebar-collapsed-description">{definition.description}</div>
+              </div>
+            </>
           )}
         </aside>
 
@@ -410,72 +435,46 @@ const App = () => {
           <section className={`collapsible card ${messagePulse ? "message-pulse" : ""}`}>
             <div className="section-header">
               <div>
-                <h2>알림</h2>
-                <p>연결 상태, 스키마 생성, 요청 완료 같은 작업 메시지를 표시합니다.</p>
+                <h2>작업 결과</h2>
+                <p>연결, 스키마 안내, 검증 상태, 실행 결과를 한 곳에서 확인합니다.</p>
               </div>
               <button type="button" className="ghost-button" onClick={() => setPanelOpen("alertOpen", !panelState.alertOpen)}>
                 {panelState.alertOpen ? "접기" : "열기"}
               </button>
             </div>
             {panelState.alertOpen ? (
-              <div className="section-body">
-                {resultMessage ? (
-                  <div className={`top-banner tone-${resultMessage.tone}`}>{resultMessage.text}</div>
-                ) : (
-                  <div className="empty-state">표시할 알림이 없습니다.</div>
-                )}
+              <div className="section-body work-result-panel">
+                <div className="result-stack">
+                  <section className="result-section">
+                    <h3 className="result-section-title">알림</h3>
+                    {resultMessage ? (
+                      <div className={`top-banner tone-${resultMessage.tone}`}>{resultMessage.text}</div>
+                    ) : (
+                      <div className="empty-state">표시할 작업 알림이 없습니다.</div>
+                    )}
+                  </section>
+
+                  <section className="result-section">
+                    <h3 className="result-section-title">검증 결과</h3>
+                    <div className="issue-list">
+                      {issues.length === 0 ? (
+                        <div className="empty-state">현재 입력값에 형식 오류가 없습니다.</div>
+                      ) : (
+                        issues.map((issue) => (
+                          <div key={issue.rowId} className="issue-item">
+                            <strong>{issue.rowId}</strong>
+                            <span>
+                              {issue.cells.map((cell) => `${cell.fieldKey}: ${cell.message}`).join(" / ")}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </section>
+                </div>
               </div>
             ) : null}
           </section>
-
-          <div className="bottom-panels">
-            <section className="collapsible card">
-              <div className="section-header">
-                <div>
-                  <h2>Payload 미리보기</h2>
-                  <p>현재 입력값이 실제 전송 payload로 어떻게 변환되는지 확인합니다.</p>
-                </div>
-                <button type="button" className="ghost-button" onClick={() => setPanelOpen("previewOpen", !panelState.previewOpen)}>
-                  {panelState.previewOpen ? "접기" : "열기"}
-                </button>
-              </div>
-              {panelState.previewOpen ? (
-                <div className="section-body preview-panel">
-                  <pre>{jsonPreview}</pre>
-                </div>
-              ) : null}
-            </section>
-
-            <section className="collapsible card">
-              <div className="section-header">
-                <div>
-                  <h2>검증 결과</h2>
-                  <p>형식 오류가 있는 셀과 행을 확인합니다.</p>
-                </div>
-                <button type="button" className="ghost-button" onClick={() => setPanelOpen("validationOpen", !panelState.validationOpen)}>
-                  {panelState.validationOpen ? "접기" : "열기"}
-                </button>
-              </div>
-              {panelState.validationOpen ? (
-                <div className="section-body issue-panel">
-                  <div className="issue-list">
-                    {issues.length === 0 ? (
-                      <div className="empty-state">현재 형식 오류가 없습니다.</div>
-                    ) : (
-                      issues.map((issue) => (
-                        <div key={issue.rowId} className="issue-item">
-                          <strong>{issue.rowId}</strong>
-                          <span>
-                            {issue.cells.map((cell) => `${cell.fieldKey}: ${cell.message}`).join(" / ")}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              ) : null}
-            </section>
-          </div>
         </section>
       </main>
     </div>

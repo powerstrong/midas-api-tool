@@ -78,8 +78,6 @@ export interface PanelStateSettings {
   sidebarOpen: boolean;
   settingsOpen: boolean;
   alertOpen: boolean;
-  previewOpen: boolean;
-  validationOpen: boolean;
 }
 
 export interface AppSettings {
@@ -87,6 +85,7 @@ export interface AppSettings {
   apiKey: string;
   schemaFolderPath: string;
   panelState: PanelStateSettings;
+  recentEndpoints: DbEndpointId[];
 }
 
 export type AppSettingsPatch = Partial<AppSettings>;

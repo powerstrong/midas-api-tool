@@ -6,6 +6,7 @@ import {
   AppSettings,
   AppSettingsPatch,
   DB_BY_ENDPOINT,
+  DbEndpointId,
   FolderSelectionResult,
   RequestInput,
   RequestResult
@@ -22,13 +23,21 @@ const defaultSettings = (): AppSettings => ({
   panelState: {
     sidebarOpen: true,
     settingsOpen: true,
-    alertOpen: true,
-    previewOpen: false,
-    validationOpen: true
-  }
+    alertOpen: true
+  },
+  recentEndpoints: []
 });
 
 const sanitizeBaseUrl = (value: string) => value.trim().replace(/\/+$/, "");
+
+const sanitizeRecentEndpoints = (value: unknown): DbEndpointId[] => {
+  const validEndpoints: DbEndpointId[] = ["FBLA", "STLD", "CNLD"];
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((item): item is DbEndpointId => validEndpoints.includes(item as DbEndpointId));
+};
 
 const isAllowedUrl = (baseUrl: string, requestUrl: string) => {
   try {
@@ -51,7 +60,8 @@ const readSettings = async (): Promise<AppSettings> => {
       panelState: {
         ...defaultSettings().panelState,
         ...(parsed.panelState ?? {})
-      }
+      },
+      recentEndpoints: sanitizeRecentEndpoints(parsed.recentEndpoints)
     };
   } catch {
     return defaultSettings();
@@ -62,7 +72,15 @@ const writeSettings = async (patch: AppSettingsPatch) => {
   const current = await readSettings();
   const next: AppSettings = {
     ...current,
-    ...patch
+    ...patch,
+    panelState: {
+      ...current.panelState,
+      ...(patch.panelState ?? {})
+    },
+    recentEndpoints:
+      patch.recentEndpoints !== undefined
+        ? sanitizeRecentEndpoints(patch.recentEndpoints)
+        : current.recentEndpoints
   };
 
   await mkdir(path.dirname(settingsFilePath), { recursive: true });
@@ -271,6 +289,3 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
-
-
-
