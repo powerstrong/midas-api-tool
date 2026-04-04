@@ -1,6 +1,12 @@
 ﻿import { useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import type { GridApi, GridReadyEvent, ProcessDataFromClipboardParams, RowSelectedEvent } from "ag-grid-community";
+import type {
+  CellKeyDownEvent,
+  GridApi,
+  GridReadyEvent,
+  ProcessDataFromClipboardParams,
+  RowSelectedEvent
+} from "ag-grid-community";
 import type { GridRow } from "../../../shared/midas";
 import type { EndpointPageProps } from "../pages/EndpointPageProps";
 
@@ -54,7 +60,7 @@ export const EndpointGridPanel = ({
     setSelectedRowIds(ids);
   };
 
-  const clearRangeSelection = () => {
+  const getSelectedCellPositions = () => {
     const ranges = gridApiRef.current?.getCellRanges() ?? [];
     const positions: Array<{ rowId: string; fieldKey: string }> = [];
 
@@ -79,6 +85,26 @@ export const EndpointGridPanel = ({
       }
     }
 
+    if (positions.length === 0) {
+      const focusedCell = gridApiRef.current?.getFocusedCell();
+      if (!focusedCell) {
+        return positions;
+      }
+
+      const rowNode = gridApiRef.current?.getDisplayedRowAtIndex(focusedCell.rowIndex);
+      const rowId = rowNode?.data?.__rowId;
+      const fieldKey = focusedCell.column.getColId();
+
+      if (rowId && fieldKey !== "__rowId") {
+        positions.push({ rowId, fieldKey });
+      }
+    }
+
+    return positions;
+  };
+
+  const clearRangeSelection = () => {
+    const positions = getSelectedCellPositions();
     if (positions.length > 0) {
       clearSelectedCells(positions);
     }
@@ -94,6 +120,24 @@ export const EndpointGridPanel = ({
     }
 
     return clipboardData;
+  };
+
+  const handleCellKeyDown = (event: CellKeyDownEvent<GridRow>) => {
+    if (event.event.defaultPrevented || event.editing) {
+      return;
+    }
+
+    if (event.event.key !== "Delete" && event.event.key !== "Backspace") {
+      return;
+    }
+
+    const positions = getSelectedCellPositions();
+    if (positions.length === 0) {
+      return;
+    }
+
+    event.event.preventDefault();
+    clearSelectedCells(positions);
   };
 
   return (
@@ -126,6 +170,7 @@ export const EndpointGridPanel = ({
           getRowId={(params) => params.data.__rowId ?? params.data.KEY}
           rowClassRules={rowClassRules}
           onGridReady={handleGridReady}
+          onCellKeyDown={handleCellKeyDown}
           onCellValueChanged={syncRowsFromGrid}
           onRowSelected={(event: RowSelectedEvent<GridRow>) => {
             if (event.source) {
