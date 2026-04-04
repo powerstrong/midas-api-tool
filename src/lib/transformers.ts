@@ -2,23 +2,27 @@
 import { buildCnldPayload, createBlankCnldRow, rowsFromCnldGet } from "../features/endpoints/transformers/cnld";
 import { buildFblaPayload, createBlankFblaRow, rowsFromFblaGet } from "../features/endpoints/transformers/fbla";
 import { buildStldPayload, createBlankStldRow, rowsFromStldGet } from "../features/endpoints/transformers/stld";
+import { buildNodePayload, createBlankNodeRow, rowsFromNodeGet } from "../features/endpoints/transformers/node";
 
 const payloadBuilders: Record<DbEndpointId, (rows: GridRow[]) => PreviewResult> = {
   FBLA: buildFblaPayload,
   STLD: buildStldPayload,
-  CNLD: buildCnldPayload
+  CNLD: buildCnldPayload,
+  NODE: buildNodePayload
 };
 
 const getRowBuilders: Record<DbEndpointId, (data: unknown) => GridRow[]> = {
   FBLA: rowsFromFblaGet,
   STLD: rowsFromStldGet,
-  CNLD: rowsFromCnldGet
+  CNLD: rowsFromCnldGet,
+  NODE: rowsFromNodeGet
 };
 
 const blankRowBuilders: Record<DbEndpointId, (seed: number) => GridRow> = {
   FBLA: createBlankFblaRow,
   STLD: createBlankStldRow,
-  CNLD: createBlankCnldRow
+  CNLD: createBlankCnldRow,
+  NODE: createBlankNodeRow
 };
 
 export const buildPayload = (endpoint: DbEndpointId, rows: GridRow[]): PreviewResult => {

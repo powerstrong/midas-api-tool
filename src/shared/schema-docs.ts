@@ -1,9 +1,10 @@
-﻿import { DB_DEFINITIONS, DbEndpointId } from "./midas";
+import { DB_DEFINITIONS, DbEndpointId } from "./midas";
 
 const endpointTitleMap: Record<DbEndpointId, string> = {
   FBLA: "Floor Load",
   STLD: "Static Load",
-  CNLD: "Nodal Load"
+  CNLD: "Nodal Load",
+  NODE: "Node"
 };
 
 const fieldLabelKoMap: Partial<Record<DbEndpointId, Record<string, string>>> = {
@@ -21,6 +22,11 @@ const fieldLabelKoMap: Partial<Record<DbEndpointId, Record<string, string>>> = {
     OPT_ALLOW_POLYGON_TYPE_UNIT_AREA: "폴리곤 단위 허용",
     GROUP_NAME: "그룹 이름",
     NODES: "노드 목록"
+  },
+  NODE: {
+    X: "X 좌표",
+    Y: "Y 좌표",
+    Z: "Z 좌표"
   }
 };
 
@@ -30,6 +36,8 @@ const kindLabelMap = {
   integer: "정수",
   boolean: "불리언",
   "integer-array": "정수 배열",
+  "string-array": "문자열 배열",
+  "object-array": "객체 배열",
   select: "선택"
 } as const;
 

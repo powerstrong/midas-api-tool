@@ -1,4 +1,4 @@
-﻿import {
+import {
   useEffect,
   useMemo,
   useRef,
@@ -631,9 +631,6 @@ export const EndpointGridPanel = ({
       </div>
 
       <div className="grid-actions">
-        <button onClick={addRow}>행 추가</button>
-        <button onClick={deleteSelectedRows}>행 삭제</button>
-        <button onClick={clearRangeSelection}>선택 영역 초기화</button>
         <button onClick={() => void loadCurrentData()} disabled={isBusy}>
           현재 데이터 불러오기 (GET)
         </button>

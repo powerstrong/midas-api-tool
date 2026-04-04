@@ -1,9 +1,10 @@
-﻿import { fblaDefinition } from "../features/endpoints/definitions/fbla";
+import { fblaDefinition } from "../features/endpoints/definitions/fbla";
 import { stldDefinition } from "../features/endpoints/definitions/stld";
 import { cnldDefinition } from "../features/endpoints/definitions/cnld";
+import { nodeDefinition } from "../features/endpoints/definitions/node";
 
-export type DbCategoryId = "static-loads";
-export type DbEndpointId = "FBLA" | "STLD" | "CNLD";
+export type DbCategoryId = "static-loads" | "modeling";
+export type DbEndpointId = "FBLA" | "STLD" | "CNLD" | "NODE";
 
 export type FieldKind =
   | "text"
@@ -11,6 +12,8 @@ export type FieldKind =
   | "integer"
   | "boolean"
   | "integer-array"
+  | "string-array"
+  | "object-array"
   | "select";
 
 export interface FieldDefinition {
@@ -99,7 +102,7 @@ export interface FolderSelectionResult {
   message?: string;
 }
 
-export const DB_DEFINITIONS: DbDefinition[] = [fblaDefinition, stldDefinition, cnldDefinition];
+export const DB_DEFINITIONS: DbDefinition[] = [nodeDefinition, fblaDefinition, stldDefinition, cnldDefinition];
 
 export const DB_BY_ENDPOINT = Object.fromEntries(
   DB_DEFINITIONS.map((definition) => [definition.endpoint, definition])

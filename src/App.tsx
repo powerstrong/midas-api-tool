@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import type { CellClassParams, ColDef } from "ag-grid-community";
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from "ag-grid-community";
 import "ag-grid-community/styles/ag-theme-quartz.css";
-import { DB_DEFINITIONS, DbEndpointId, GridRow } from "./shared/midas";
+import { DB_DEFINITIONS, DbEndpointId, GridRow, type FieldKind } from "./shared/midas";
 import { getSelectedDefinition, useAppStore } from "./store/app-store";
 import type { EndpointPageProps } from "./features/endpoints/pages/EndpointPageProps";
 import FBLAPage from "./features/endpoints/pages/FBLAPage";
 import STLDPage from "./features/endpoints/pages/STLDPage";
 import CNLDPage from "./features/endpoints/pages/CNLDPage";
+import NODEPage from "./features/endpoints/pages/NODEPage";
 import { WorkResultPanel } from "./features/results/WorkResultPanel";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -62,7 +63,44 @@ const connectionLabelMap = {
 const endpointPages: Record<DbEndpointId, (props: EndpointPageProps) => JSX.Element> = {
   FBLA: FBLAPage,
   STLD: STLDPage,
-  CNLD: CNLDPage
+  CNLD: CNLDPage,
+  NODE: NODEPage
+};
+
+
+const getApiTypeLabel = (kind: FieldKind) => {
+  switch (kind) {
+    case "text":
+      return "string";
+    case "integer":
+      return "integer";
+    case "number":
+      return "number";
+    case "boolean":
+      return "boolean";
+    case "integer-array":
+      return "array:number";
+    case "string-array":
+      return "array:string";
+    case "object-array":
+      return "array:object";
+    case "select":
+      return "enum";
+    default:
+      return "string";
+  }
+};
+
+const GridHeader = (props: {
+  displayName?: string;
+  typeLabel?: string;
+}) => {
+  return (
+    <div className="grid-header-cell">
+      <span className="grid-header-title">{props.displayName ?? ""}</span>
+      {props.typeLabel ? <span className="grid-header-type">{props.typeLabel}</span> : null}
+    </div>
+  );
 };
 
 const App = () => {
@@ -95,24 +133,6 @@ const App = () => {
     submit
   } = useAppStore();
 
-  useEffect(() => {
-    void initialize();
-  }, [initialize]);
-
-  useEffect(() => {
-    if (!resultMessage) {
-      return;
-    }
-
-    setPanelOpen("alertOpen", true);
-    setMessagePulse(true);
-    const timeoutId = window.setTimeout(() => {
-      setMessagePulse(false);
-    }, 1400);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [resultMessage, setPanelOpen]);
-
   const definition = getSelectedDefinition(selectedEndpoint);
   const issueMap = useMemo(() => {
     const next = new Map<string, string>();
@@ -140,8 +160,10 @@ const App = () => {
         editable: true,
         width: 110,
         pinned: "left",
-        checkboxSelection: true,
-        headerCheckboxSelection: true
+        headerComponent: GridHeader,
+        headerComponentParams: {
+          typeLabel: "integer"
+        }
       }
     ];
 
@@ -151,6 +173,10 @@ const App = () => {
         field: field.key,
         editable: true,
         width: field.width ?? 150,
+        headerComponent: GridHeader,
+        headerComponentParams: {
+          typeLabel: getApiTypeLabel(field.kind)
+        },
         cellEditor:
           field.kind === "select" && field.options ? "agSelectCellEditor" : undefined,
         cellEditorParams:
@@ -322,7 +348,7 @@ const App = () => {
                 <input
                   value={endpointSearch}
                   onChange={(event) => setEndpointSearch(event.target.value)}
-                  placeholder="FBLA, STLD, CNLD..."
+                  placeholder="NODE, FBLA, STLD, CNLD..."
                 />
               </label>
               {recentDefinitions.length > 0 ? (
