@@ -1,10 +1,14 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
-import { AgGridReact } from "ag-grid-react";
-import type { CellClassParams, ColDef, GridApi, GridReadyEvent, RowSelectedEvent } from "ag-grid-community";
+﻿import { useEffect, useMemo, useState } from "react";
+import type { CellClassParams, ColDef } from "ag-grid-community";
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from "ag-grid-community";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 import { DB_DEFINITIONS, DbEndpointId, GridRow } from "./shared/midas";
 import { getSelectedDefinition, useAppStore } from "./store/app-store";
+import type { EndpointPageProps } from "./features/endpoints/pages/EndpointPageProps";
+import FBLAPage from "./features/endpoints/pages/FBLAPage";
+import STLDPage from "./features/endpoints/pages/STLDPage";
+import CNLDPage from "./features/endpoints/pages/CNLDPage";
+import { WorkResultPanel } from "./features/results/WorkResultPanel";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -24,8 +28,13 @@ const connectionLabelMap = {
   error: "실패"
 } as const;
 
+const endpointPages: Record<DbEndpointId, (props: EndpointPageProps) => JSX.Element> = {
+  FBLA: FBLAPage,
+  STLD: STLDPage,
+  CNLD: CNLDPage
+};
+
 const App = () => {
-  const gridApiRef = useRef<GridApi<GridRow>>();
   const [messagePulse, setMessagePulse] = useState(false);
   const [endpointSearch, setEndpointSearch] = useState("");
   const {
@@ -144,60 +153,6 @@ const App = () => {
     []
   );
 
-  const handleGridReady = (event: GridReadyEvent<GridRow>) => {
-    gridApiRef.current = event.api;
-  };
-
-  const syncRowsFromGrid = () => {
-    const nextRows: GridRow[] = [];
-    gridApiRef.current?.forEachNode((node) => {
-      if (node.data) {
-        nextRows.push(node.data);
-      }
-    });
-    setRows(nextRows);
-  };
-
-  const handleSelectionChanged = () => {
-    const ids =
-      gridApiRef.current
-        ?.getSelectedRows()
-        .map((row) => row.__rowId ?? "")
-        .filter(Boolean) ?? [];
-
-    setSelectedRowIds(ids);
-  };
-
-  const clearRangeSelection = () => {
-    const ranges = gridApiRef.current?.getCellRanges() ?? [];
-    const positions: Array<{ rowId: string; fieldKey: string }> = [];
-
-    for (const range of ranges) {
-      const start = Math.min(range.startRow?.rowIndex ?? 0, range.endRow?.rowIndex ?? 0);
-      const end = Math.max(range.startRow?.rowIndex ?? 0, range.endRow?.rowIndex ?? 0);
-
-      for (let rowIndex = start; rowIndex <= end; rowIndex += 1) {
-        const rowNode = gridApiRef.current?.getDisplayedRowAtIndex(rowIndex);
-        const rowId = rowNode?.data?.__rowId;
-        if (!rowId) {
-          continue;
-        }
-
-        for (const column of range.columns) {
-          const fieldKey = column.getColId();
-          if (fieldKey === "__rowId") {
-            continue;
-          }
-          positions.push({ rowId, fieldKey });
-        }
-      }
-    }
-
-    if (positions.length > 0) {
-      clearSelectedCells(positions);
-    }
-  };
-
   const sortedDefinitions = useMemo(() => {
     const recentOrder = new Map(recentEndpoints.map((endpoint, index) => [endpoint, index]));
 
@@ -232,6 +187,26 @@ const App = () => {
       return haystack.includes(keyword);
     });
   }, [endpointSearch, sortedDefinitions]);
+
+  const endpointPageProps: EndpointPageProps = {
+    definition,
+    rows,
+    issues,
+    isBusy,
+    appTheme,
+    columnDefs,
+    defaultColDef,
+    rowClassRules,
+    setRows,
+    clearSelectedCells,
+    setSelectedRowIds,
+    addRow,
+    deleteSelectedRows,
+    loadCurrentData,
+    submit
+  };
+
+  const SelectedEndpointPage = endpointPages[selectedEndpoint];
 
   return (
     <div className="app-shell">
@@ -393,88 +368,14 @@ const App = () => {
         </aside>
 
         <section className="content">
-          <div className="grid-panel card">
-            <div className="grid-actions">
-              <button onClick={addRow}>행 추가</button>
-              <button onClick={deleteSelectedRows}>행 삭제</button>
-              <button onClick={clearRangeSelection}>선택 영역 초기화</button>
-              <button onClick={() => void loadCurrentData()} disabled={isBusy}>
-                현재 데이터 불러오기 (GET)
-              </button>
-              <button onClick={() => void submit("POST")} disabled={isBusy}>
-                입력 실행 (POST)
-              </button>
-              <button onClick={() => void submit("PUT")} disabled={isBusy}>
-                전체 반영 (PUT)
-              </button>
-            </div>
-
-            <div className="ag-wrap">
-              <AgGridReact<GridRow>
-                theme={appTheme}
-                rowData={rows}
-                columnDefs={columnDefs}
-                defaultColDef={defaultColDef}
-                rowSelection={{ mode: "multiRow" }}
-                cellSelection={true}
-                stopEditingWhenCellsLoseFocus={true}
-                getRowId={(params) => params.data.__rowId ?? params.data.KEY}
-                rowClassRules={rowClassRules}
-                onGridReady={handleGridReady}
-                onCellValueChanged={syncRowsFromGrid}
-                onRowSelected={(event: RowSelectedEvent<GridRow>) => {
-                  if (event.source) {
-                    handleSelectionChanged();
-                  }
-                }}
-                onSelectionChanged={handleSelectionChanged}
-              />
-            </div>
-          </div>
-
-          <section className={`collapsible card ${messagePulse ? "message-pulse" : ""}`}>
-            <div className="section-header">
-              <div>
-                <h2>작업 결과</h2>
-                <p>연결, 스키마 안내, 검증 상태, 실행 결과를 한 곳에서 확인합니다.</p>
-              </div>
-              <button type="button" className="ghost-button" onClick={() => setPanelOpen("alertOpen", !panelState.alertOpen)}>
-                {panelState.alertOpen ? "접기" : "열기"}
-              </button>
-            </div>
-            {panelState.alertOpen ? (
-              <div className="section-body work-result-panel">
-                <div className="result-stack">
-                  <section className="result-section">
-                    <h3 className="result-section-title">알림</h3>
-                    {resultMessage ? (
-                      <div className={`top-banner tone-${resultMessage.tone}`}>{resultMessage.text}</div>
-                    ) : (
-                      <div className="empty-state">표시할 작업 알림이 없습니다.</div>
-                    )}
-                  </section>
-
-                  <section className="result-section">
-                    <h3 className="result-section-title">검증 결과</h3>
-                    <div className="issue-list">
-                      {issues.length === 0 ? (
-                        <div className="empty-state">현재 입력값에 형식 오류가 없습니다.</div>
-                      ) : (
-                        issues.map((issue) => (
-                          <div key={issue.rowId} className="issue-item">
-                            <strong>{issue.rowId}</strong>
-                            <span>
-                              {issue.cells.map((cell) => `${cell.fieldKey}: ${cell.message}`).join(" / ")}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </section>
-                </div>
-              </div>
-            ) : null}
-          </section>
+          <SelectedEndpointPage {...endpointPageProps} />
+          <WorkResultPanel
+            isOpen={panelState.alertOpen}
+            messagePulse={messagePulse}
+            resultMessage={resultMessage}
+            issues={issues}
+            onToggle={() => setPanelOpen("alertOpen", !panelState.alertOpen)}
+          />
         </section>
       </main>
     </div>
