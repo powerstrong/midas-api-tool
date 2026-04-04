@@ -1,4 +1,4 @@
-import {
+﻿import {
   useEffect,
   useMemo,
   useRef,
@@ -63,6 +63,9 @@ interface GridSelectionRange {
   endColumnIndex: number;
 }
 
+const ADD_ROW_KEY = "__add_row__";
+const ADD_ROW_LABEL = "+ 행 추가";
+
 export const EndpointGridPanel = ({
   definition,
   rows,
@@ -111,6 +114,11 @@ export const EndpointGridPanel = ({
   const visibleColumnIds = useMemo(
     () => columnDefs.map((columnDef) => String(columnDef.field ?? "")).filter(Boolean),
     [columnDefs]
+  );
+
+  const pinnedBottomRowData = useMemo<GridRow[]>(
+    () => [{ KEY: ADD_ROW_KEY, __rowId: ADD_ROW_KEY } as GridRow],
+    []
   );
 
   const triggerCopyFlash = () => {
@@ -445,7 +453,7 @@ export const EndpointGridPanel = ({
   };
 
   const handleCellFocused = (event: CellFocusedEvent<GridRow>) => {
-    if (event.rowIndex == null || !event.column) {
+    if (event.rowPinned || event.rowIndex == null || !event.column) {
       return;
     }
 
@@ -458,6 +466,11 @@ export const EndpointGridPanel = ({
   };
 
   const handleCellClicked = (event: CellClickedEvent<GridRow>) => {
+    if (event.node.rowPinned === "bottom") {
+      addRow();
+      return;
+    }
+
     const nextCell = { rowIndex: event.rowIndex, columnId: event.column.getColId() } satisfies GridCellRef;
 
     if (event.event.shiftKey) {
@@ -470,6 +483,10 @@ export const EndpointGridPanel = ({
   };
 
   const handleCellMouseDown = (event: CellMouseDownEvent<GridRow>) => {
+    if (event.node.rowPinned === "bottom") {
+      return;
+    }
+
     const nextCell = { rowIndex: event.rowIndex, columnId: event.column.getColId() } satisfies GridCellRef;
     isDraggingRef.current = true;
 
@@ -483,7 +500,7 @@ export const EndpointGridPanel = ({
   };
 
   const handleCellMouseOver = (event: CellMouseOverEvent<GridRow>) => {
-    if (!isDraggingRef.current) {
+    if (event.node.rowPinned === "bottom" || !isDraggingRef.current) {
       return;
     }
 
@@ -527,16 +544,37 @@ export const EndpointGridPanel = ({
   };
 
   const mergedColumnDefs = useMemo<ColDef<GridRow>[]>(() => {
-    return columnDefs.map((columnDef) => {
+    return columnDefs.map((columnDef, definitionIndex) => {
       const fieldKey = String(columnDef.field ?? "");
       const originalCellClass = columnDef.cellClass;
+      const isFirstColumn = definitionIndex === 0;
 
       return {
         ...columnDef,
+        editable: (params) => params.node.rowPinned !== "bottom" && Boolean(columnDef.editable),
+        colSpan: (params) => {
+          if (params.node.rowPinned === "bottom" && isFirstColumn) {
+            return visibleColumnIds.length;
+          }
+
+          return 1;
+        },
+        valueGetter: (params) => {
+          if (params.node.rowPinned === "bottom") {
+            return isFirstColumn ? ADD_ROW_LABEL : "";
+          }
+
+          return params.data?.[fieldKey] ?? "";
+        },
         cellClass: (params) => {
           const classes: string[] = [];
           const rowIndex = params.node.rowIndex ?? -1;
           const columnIndex = visibleColumnIds.indexOf(fieldKey);
+
+          if (params.node.rowPinned === "bottom") {
+            classes.push(isFirstColumn ? "grid-add-row-cell" : "grid-add-row-cell-hidden");
+            return classes;
+          }
 
           if (typeof originalCellClass === "function") {
             const value = originalCellClass(params);
@@ -586,26 +624,15 @@ export const EndpointGridPanel = ({
     });
   }, [columnDefs, focusedCell, isCopyFlashing, selectedRange, visibleColumnIds]);
 
-  const selectionLabel =
-    selectedRange == null
-      ? "선택 없음"
-      : `${selectedRange.endRowIndex - selectedRange.startRowIndex + 1}행 x ${selectedRange.endColumnIndex - selectedRange.startColumnIndex + 1}열 (${(selectedRange.endRowIndex - selectedRange.startRowIndex + 1) * (selectedRange.endColumnIndex - selectedRange.startColumnIndex + 1)}칸)`;
-
   return (
     <div className="grid-panel card">
       <div className="grid-toolbar">
         <div className="grid-toolbar-main">
           <div>
             <div className="grid-title">입력 테이블</div>
-            <div className="grid-subtitle">
-              여러 셀 범위를 복사하고 시작 셀 기준으로 붙여넣을 수 있습니다.
-            </div>
+            <div className="grid-subtitle">여러 셀 범위를 복사하고 시작 셀 기준으로 붙여넣을 수 있습니다.</div>
           </div>
           <div className="grid-meta">
-            <div className="grid-chip">
-              <span>선택</span>
-              <strong>{selectionLabel}</strong>
-            </div>
             {pasteSummary ? (
               <div className="grid-chip accent">
                 <span>최근 붙여넣기</span>
@@ -618,11 +645,11 @@ export const EndpointGridPanel = ({
             {issues.length > 0 ? (
               <div className="grid-chip warning">
                 <span>검증 필요</span>
-                <strong>{issues.length}개 행에서 입력 확인</strong>
+                <strong>{issues.length}건 확인 필요</strong>
               </div>
             ) : (
               <div className="grid-chip success">
-                <span>검증 상태</span>
+                <span>검증 필요</span>
                 <strong>현재 입력 형식 양호</strong>
               </div>
             )}
@@ -642,13 +669,20 @@ export const EndpointGridPanel = ({
         </button>
       </div>
 
-      <div className="ag-wrap custom-selection-wrap" onKeyDownCapture={handleGridKeyDownCapture} onCopy={handleCopy} onPaste={handlePaste}>
+      <div
+        className="ag-wrap custom-selection-wrap"
+        onKeyDownCapture={handleGridKeyDownCapture}
+        onCopy={handleCopy}
+        onPaste={handlePaste}
+      >
         <AgGridReact<GridRow>
           theme={appTheme}
           rowData={rows}
           columnDefs={mergedColumnDefs}
           defaultColDef={defaultColDef}
-          rowSelection={{ mode: "multiRow" }}
+          rowSelection={{ mode: "multiRow", checkboxes: false, headerCheckbox: false }}
+          pinnedBottomRowData={pinnedBottomRowData}
+          domLayout="autoHeight"
           processDataFromClipboard={handleProcessDataFromClipboard}
           stopEditingWhenCellsLoseFocus={true}
           singleClickEdit={false}

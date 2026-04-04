@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   color-scheme: dark;
   font-family: "Segoe UI", "Noto Sans KR", sans-serif;
   background:
@@ -583,7 +583,7 @@ code {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 520px;
+  min-height: 0;
 }
 
 .grid-toolbar {
@@ -684,8 +684,8 @@ code {
 }
 
 .ag-wrap {
-  min-height: 520px;
-  flex: 1;
+  min-height: 0;
+  flex: none;
 }
 
 .work-result-panel {
@@ -1017,4 +1017,61 @@ code {
   .db-quick-list {
     grid-template-columns: 1fr;
   }
+}
+
+.custom-selection-wrap .ag-root,
+.custom-selection-wrap .ag-root-wrapper-body,
+.custom-selection-wrap .ag-body-viewport,
+.custom-selection-wrap .ag-center-cols-viewport,
+.custom-selection-wrap .ag-center-cols-container {
+  min-height: 0 !important;
+}
+
+.custom-selection-wrap .ag-center-cols-viewport,
+.custom-selection-wrap .ag-body-viewport {
+  overflow-y: hidden !important;
+}
+
+.grid-add-row-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 18px;
+  border-top: 1px dashed rgba(104, 151, 220, 0.34) !important;
+  border-bottom: 0 !important;
+  background: linear-gradient(180deg, rgba(13, 23, 40, 0.96), rgba(9, 17, 31, 0.98)) !important;
+  color: #d5ebff !important;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+.grid-add-row-cell-hidden {
+  width: 0 !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: transparent !important;
+  pointer-events: none !important;
+}
+
+.grid-add-row-cell:hover {
+  border-top-color: rgba(140, 209, 255, 0.52) !important;
+  background: linear-gradient(180deg, rgba(20, 35, 58, 0.98), rgba(12, 23, 41, 1)) !important;
+  color: #f3fbff !important;
+}
+
+.custom-selection-wrap .ag-row-pinned .ag-cell {
+  height: 44px !important;
+  line-height: 44px !important;
+}
+
+.custom-selection-wrap .ag-row-pinned .ag-cell-value {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
 }

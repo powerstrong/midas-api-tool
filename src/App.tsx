@@ -159,7 +159,6 @@ const App = () => {
         field: "KEY",
         editable: true,
         width: 110,
-        pinned: "left",
         headerComponent: GridHeader,
         headerComponentParams: {
           typeLabel: "integer"
