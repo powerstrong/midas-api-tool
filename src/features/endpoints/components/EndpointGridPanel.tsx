@@ -3,7 +3,8 @@
   useMemo,
   useRef,
   useState,
-  type ClipboardEvent as ReactClipboardEvent
+  type ClipboardEvent as ReactClipboardEvent,
+  type MouseEvent as ReactMouseEvent
 } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type {
@@ -63,6 +64,14 @@ interface GridSelectionRange {
   endColumnIndex: number;
 }
 
+interface HoveredRowDeleteState {
+  rowIndex: number;
+  rowId: string;
+  top: number;
+  height: number;
+  left: number | null;
+}
+
 const ADD_ROW_KEY = "__add_row__";
 const ADD_ROW_LABEL = "+ 행 추가";
 
@@ -85,6 +94,7 @@ export const EndpointGridPanel = ({
   submit
 }: EndpointPageProps) => {
   const gridApiRef = useRef<GridApi<GridRow>>();
+  const gridWrapRef = useRef<HTMLDivElement | null>(null);
   const selectionAnchorRef = useRef<GridCellRef | null>(null);
   const copyFlashTimeoutRef = useRef<number | null>(null);
   const isDraggingRef = useRef(false);
@@ -96,6 +106,7 @@ export const EndpointGridPanel = ({
     columnCount: number;
     skippedHeader: boolean;
   } | null>(null);
+  const [hoveredRowDelete, setHoveredRowDelete] = useState<HoveredRowDeleteState | null>(null);
 
   useEffect(() => {
     const handleMouseUp = () => {
@@ -219,6 +230,108 @@ export const EndpointGridPanel = ({
       clearSelectedCells(positions);
     }
   };
+
+  const getSelectedRowIdsFromRange = () => {
+    if (!selectedRange) {
+      return [] as string[];
+    }
+
+    const rowIds: string[] = [];
+    for (let rowIndex = selectedRange.startRowIndex; rowIndex <= selectedRange.endRowIndex; rowIndex += 1) {
+      const rowNode = gridApiRef.current?.getDisplayedRowAtIndex(rowIndex);
+      const rowId = rowNode?.data?.__rowId;
+      if (rowId) {
+        rowIds.push(rowId);
+      }
+    }
+
+    return rowIds;
+  };
+
+  const updateHoveredRowDelete = (rowIndex: number, rowId: string, target: EventTarget | null) => {
+    if (!gridWrapRef.current || !rowId || !(target instanceof Element)) {
+      return;
+    }
+
+    const rowElement = target.closest(".ag-row");
+    if (!(rowElement instanceof HTMLElement)) {
+      return;
+    }
+
+    const wrapRect = gridWrapRef.current.getBoundingClientRect();
+    const viewportElement = gridWrapRef.current.querySelector(".ag-center-cols-viewport");
+    const containerElement = gridWrapRef.current.querySelector(".ag-center-cols-container");
+    const viewportRect = viewportElement instanceof HTMLElement ? viewportElement.getBoundingClientRect() : wrapRect;
+    const containerRect = containerElement instanceof HTMLElement ? containerElement.getBoundingClientRect() : viewportRect;
+    let top = rowElement.getBoundingClientRect().top - wrapRect.top;
+    let height = rowElement.getBoundingClientRect().height;
+
+    if (selectedRange && rowIndex >= selectedRange.startRowIndex && rowIndex <= selectedRange.endRowIndex) {
+      const startRowElement = gridWrapRef.current.querySelector(`.ag-row[row-index="${selectedRange.startRowIndex}"]`);
+      const endRowElement = gridWrapRef.current.querySelector(`.ag-row[row-index="${selectedRange.endRowIndex}"]`);
+
+      if (startRowElement instanceof HTMLElement && endRowElement instanceof HTMLElement) {
+        const startRect = startRowElement.getBoundingClientRect();
+        const endRect = endRowElement.getBoundingClientRect();
+        top = startRect.top - wrapRect.top;
+        height = endRect.bottom - startRect.top;
+      }
+    }
+
+    const actionWidth = 42;
+    const inset = 4;
+    const hasHorizontalOverflow = containerRect.right > viewportRect.right + 1;
+    const left = hasHorizontalOverflow
+      ? null
+      : containerRect.right - wrapRect.left + inset;
+
+    setHoveredRowDelete({
+      rowIndex,
+      rowId,
+      top,
+      height,
+      left
+    });
+  };
+
+  useEffect(() => {
+    if (!hoveredRowDelete || !gridWrapRef.current) {
+      return;
+    }
+
+    const rowElement = gridWrapRef.current.querySelector(`.ag-row[row-index="${hoveredRowDelete.rowIndex}"]`);
+    if (!(rowElement instanceof HTMLElement)) {
+      setHoveredRowDelete(null);
+      return;
+    }
+
+    updateHoveredRowDelete(hoveredRowDelete.rowIndex, hoveredRowDelete.rowId, rowElement);
+  }, [selectedRange, rows.length]);
+
+  const handleDeleteRows = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!hoveredRowDelete) {
+      return;
+    }
+
+    const selectedRowIds =
+      selectedRange &&
+      hoveredRowDelete.rowIndex >= selectedRange.startRowIndex &&
+      hoveredRowDelete.rowIndex <= selectedRange.endRowIndex
+        ? getSelectedRowIdsFromRange()
+        : [hoveredRowDelete.rowId];
+
+    if (selectedRowIds.length === 0) {
+      return;
+    }
+
+    setSelectedRowIds(Array.from(new Set(selectedRowIds)));
+    setTimeout(() => deleteSelectedRows(), 0);
+    setHoveredRowDelete(null);
+  };
+
 
   const detectHeaderRow = (data: string[][]) => {
     const firstRow = data[0];
@@ -471,6 +584,8 @@ export const EndpointGridPanel = ({
       return;
     }
 
+    updateHoveredRowDelete(event.rowIndex, event.data?.__rowId ?? "", event.event.target);
+
     const nextCell = { rowIndex: event.rowIndex, columnId: event.column.getColId() } satisfies GridCellRef;
 
     if (event.event.shiftKey) {
@@ -487,6 +602,8 @@ export const EndpointGridPanel = ({
       return;
     }
 
+    updateHoveredRowDelete(event.rowIndex, event.data?.__rowId ?? "", event.event.target);
+
     const nextCell = { rowIndex: event.rowIndex, columnId: event.column.getColId() } satisfies GridCellRef;
     isDraggingRef.current = true;
 
@@ -500,7 +617,13 @@ export const EndpointGridPanel = ({
   };
 
   const handleCellMouseOver = (event: CellMouseOverEvent<GridRow>) => {
-    if (event.node.rowPinned === "bottom" || !isDraggingRef.current) {
+    if (event.node.rowPinned === "bottom") {
+      return;
+    }
+
+    updateHoveredRowDelete(event.rowIndex, event.data?.__rowId ?? "", event.event.target);
+
+    if (!isDraggingRef.current) {
       return;
     }
 
@@ -670,10 +793,12 @@ export const EndpointGridPanel = ({
       </div>
 
       <div
+        ref={gridWrapRef}
         className="ag-wrap custom-selection-wrap"
         onKeyDownCapture={handleGridKeyDownCapture}
         onCopy={handleCopy}
         onPaste={handlePaste}
+        onMouseLeave={() => setHoveredRowDelete(null)}
       >
         <AgGridReact<GridRow>
           theme={appTheme}
@@ -704,7 +829,19 @@ export const EndpointGridPanel = ({
             }
           }}
           onSelectionChanged={handleSelectionChanged}
+          onBodyScroll={() => setHoveredRowDelete(null)}
         />
+        {hoveredRowDelete ? (
+          <button
+            type="button"
+            className="grid-row-delete-button"
+            style={{ top: `${hoveredRowDelete.top}px`, height: `${hoveredRowDelete.height}px`, ...(hoveredRowDelete.left == null ? {} : { left: `${hoveredRowDelete.left}px`, right: "auto" }) }}
+            onClick={handleDeleteRows}
+            aria-label="행 삭제"
+          >
+            삭제
+          </button>
+        ) : null}
       </div>
     </div>
   );
