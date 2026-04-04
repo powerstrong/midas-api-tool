@@ -37,6 +37,7 @@ interface AppState {
   setSelectedEndpoint: (value: DbEndpointId) => void;
   setRows: (rows: GridRow[]) => void;
   upsertRow: (rowId: string, patch: Partial<GridRow>) => void;
+  ensureRowsForPaste: (startRowIndex: number, pastedRowCount: number) => void;
   addRow: () => void;
   deleteSelectedRows: () => void;
   clearSelectedCells: (cellPositions: Array<{ rowId: string; fieldKey: string }>) => void;
@@ -139,6 +140,23 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({
       rows: state.rows.map((row) => (row.__rowId === rowId ? { ...row, ...patch } : row))
     }));
+    get().refreshDerivedState();
+  },
+  ensureRowsForPaste: (startRowIndex, pastedRowCount) => {
+    const state = get();
+    const requiredRowCount = startRowIndex + pastedRowCount;
+
+    if (requiredRowCount <= state.rows.length) {
+      return;
+    }
+
+    const rowsToAdd = requiredRowCount - state.rows.length;
+    const nextSeed = getNextKeySeed(state.rows);
+    const extraRows = Array.from({ length: rowsToAdd }, (_, index) =>
+      createBlankRow(state.selectedEndpoint, nextSeed + index)
+    );
+
+    set({ rows: [...state.rows, ...extraRows] });
     get().refreshDerivedState();
   },
   addRow: () => {

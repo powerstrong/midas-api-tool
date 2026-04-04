@@ -1,8 +1,16 @@
 ﻿import { useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import type { GridApi, GridReadyEvent, RowSelectedEvent } from "ag-grid-community";
+import type { GridApi, GridReadyEvent, ProcessDataFromClipboardParams, RowSelectedEvent } from "ag-grid-community";
 import type { GridRow } from "../../../shared/midas";
 import type { EndpointPageProps } from "../pages/EndpointPageProps";
+
+const trimClipboardData = (data: string[][]) => {
+  const next = [...data];
+  while (next.length > 0 && next[next.length - 1].every((value) => value.trim() === "")) {
+    next.pop();
+  }
+  return next;
+};
 
 export const EndpointGridPanel = ({
   rows,
@@ -12,6 +20,7 @@ export const EndpointGridPanel = ({
   defaultColDef,
   rowClassRules,
   setRows,
+  ensureRowsForPaste,
   clearSelectedCells,
   setSelectedRowIds,
   addRow,
@@ -75,6 +84,18 @@ export const EndpointGridPanel = ({
     }
   };
 
+  const handleProcessDataFromClipboard = (params: ProcessDataFromClipboardParams<GridRow>) => {
+    const clipboardData = trimClipboardData(params.data);
+    const focusedCell = gridApiRef.current?.getFocusedCell();
+    const startRowIndex = focusedCell?.rowIndex ?? 0;
+
+    if (clipboardData.length > 1) {
+      ensureRowsForPaste(startRowIndex, clipboardData.length);
+    }
+
+    return clipboardData;
+  };
+
   return (
     <div className="grid-panel card">
       <div className="grid-actions">
@@ -100,6 +121,7 @@ export const EndpointGridPanel = ({
           defaultColDef={defaultColDef}
           rowSelection={{ mode: "multiRow" }}
           cellSelection={true}
+          processDataFromClipboard={handleProcessDataFromClipboard}
           stopEditingWhenCellsLoseFocus={true}
           getRowId={(params) => params.data.__rowId ?? params.data.KEY}
           rowClassRules={rowClassRules}

@@ -12,6 +12,7 @@ export interface EndpointPageProps {
   defaultColDef: ColDef<GridRow>;
   rowClassRules: Record<string, (params: { data?: GridRow }) => boolean>;
   setRows: (rows: GridRow[]) => void;
+  ensureRowsForPaste: (startRowIndex: number, pastedRowCount: number) => void;
   clearSelectedCells: (cellPositions: Array<{ rowId: string; fieldKey: string }>) => void;
   setSelectedRowIds: (rowIds: string[]) => void;
   addRow: () => void;
