@@ -1,218 +1,104 @@
-# midas-api-tool Codex Spec (Korean UI Version)
+# MIDAS API Tool Spec
 
 ## 0. 제품 개요
+midas-api-tool은 MIDAS API 기반 DB 입력을 쉽게 처리하기 위한 Electron 데스크톱 도구다.
+사용자는 JSON을 직접 작성하지 않고, 엑셀과 유사한 테이블 편집과 복사/붙여넣기만으로 DB 데이터를 입력할 수 있어야 한다.
 
-midas-api-tool은 MIDAS GEN NX / CIVIL NX의 DB 데이터를 대량 입력하기 위한 Electron 기반 데스크톱 애플리케이션이다.
-
-사용자는 다음을 수행할 수 있어야 한다:
-
+기본 작업 흐름은 다음과 같다.
 1. Base URL과 MAPI-Key 입력
 2. 연결 테스트
-3. DB endpoint 선택 (예: `db/FBLA`)
-4. 엑셀처럼 테이블 형태로 데이터 입력 및 붙여넣기
+3. DB 엔드포인트 선택
+4. 테이블에 데이터 입력 또는 엑셀 데이터 붙여넣기
 5. 입력값 검증 및 변환
-6. MIDAS API 형식(JSON Assign 구조)으로 payload 생성
-7. POST 또는 PUT으로 MIDAS에 전송
-8. 결과 확인 (성공/실패 및 오류 행 표시)
+6. MIDAS API 형식의 payload 자동 생성
+7. POST 또는 PUT 요청 전송
+8. 결과와 오류 확인
 
----
+## 1. 핵심 참고 자료
+이 프로젝트를 구현할 때는 아래 두 자료를 항상 우선 참고한다.
 
-## 1. 핵심 설계 원칙
+1. MIDAS API 매뉴얼
+- https://support.midasuser.com/hc/ko/p/gate_api_manual
 
-- Electron 기반 로컬 앱 (웹 서비스 금지)
-- 모든 API 요청은 사용자 PC에서 직접 수행
-- MAPI-Key는 외부 서버로 절대 전송하지 않음
-- Telemetry, Analytics, 외부 로그 전송 금지
-- UI는 반드시 한글
+2. MIDAS Online Manual 참고 자료
+- https://support.midasuser.com/hc/ko/articles/49909210848537-MIDAS-GEN-NX-Online-Manual
 
----
+## 2. 용어 규칙
+- 사용자 화면 문구, 도움말, 작업 설명, 구현 메모에서는 `MIDAS GEN`이라는 표현을 직접 쓰지 않고 `MIDAS API`라고 통일한다.
+- 이유: MIDAS GEN과 MIDAS Civil은 별도 제품이지만 인터페이스가 매우 유사하고, 이 도구는 MIDAS Civil 사용자에게도 자연스럽게 읽혀야 한다.
+- 다만 엔드포인트 id, 공식 필드명, 공식 기능명은 원문을 유지할 수 있다.
 
-## 2. 주요 사용자
+## 3. 제품 방향
+- 이 제품은 JSON 편집기가 아니라 MIDAS 입력 도구다.
+- 사용자가 JSON payload를 직접 수정하지 않게 한다.
+- payload 생성은 프로그램 내부에서 자동 처리한다.
+- 목표는 개발자 중심의 MIDAS API를 비개발자도 사용할 수 있게 만드는 것이다.
+- 핵심 UX는 엑셀형 테이블 편집, 다중 셀 선택, 여러 칸 붙여넣기, 빠른 검증 피드백이다.
 
-- MIDAS를 사용하는 구조 엔지니어
-- 엑셀 기반 데이터 입력을 반복하는 사용자
+## 4. 아키텍처 원칙
+- Electron 기반 로컬 앱으로 동작한다.
+- 모든 API 요청은 사용자 PC에서 직접 전송한다.
+- MAPI-Key와 입력 데이터는 외부 서버로 전송하지 않는다.
+- Telemetry, analytics, 외부 로그 전송은 하지 않는다.
+- Renderer(UI) / Preload Bridge / Main Process / MIDAS API 흐름을 유지한다.
 
----
+## 5. 주요 사용자
+- MIDAS 구조 모델 데이터를 반복적으로 입력하는 실무 사용자
+- 엑셀 기반 입력에 익숙하지만 JSON이나 API 호출은 익숙하지 않은 사용자
+- MIDAS Civil / MIDAS 계열 인터페이스에 익숙한 사용자
 
-## 3. UI 구성 (한글 필수)
-
+## 6. 핵심 UI 구성
 ### 상단
+- 제품명 및 소개
+- MIDAS API 매뉴얼 링크
 
+### 작업 설정
 - Base URL 입력
 - MAPI-Key 입력
 - 연결 테스트 버튼
-- 연결 상태 표시 (`미연결 / 연결됨 / 실패`)
+- 연결 상태 표시
 
-### 좌측
+### 좌측 사이드바
+- DB 엔드포인트 검색
+- 최근 사용 목록
+- 전체 DB 목록
 
-- DB 목록
-- Floor Load (`db/FBLA`)
-- Static Load (`db/STLD`)
-- Nodal Load (`db/CNLD`)
+### 중앙 작업 영역
+- 엔드포인트별 입력 테이블
+- 엑셀형 복사/붙여넣기와 범위 선택
+- 검증 상태 및 작업 도구
 
-### 중앙
+### 하단 결과 영역
+- 알림
+- 검증 결과
+- 요청 결과 표시
 
-- 엑셀형 테이블
+## 7. 테이블 UX 원칙
+- 셀 클릭 시 첫 클릭은 선택만 수행한다.
+- 방향키, Enter, Shift+방향키, 드래그 선택이 자연스럽게 동작해야 한다.
+- 여러 셀 복사/붙여넣기는 엑셀과 유사한 감각을 제공해야 한다.
+- 헤더 포함 데이터 붙여넣기, 여러 행 자동 추가, 다중 셀 삭제를 지원한다.
+- 현재 셀과 선택 범위는 명확히 보이되 과하지 않게 표현한다.
 
-### 하단
-
-- 행 추가
-- 행 삭제
-- 선택 영역 초기화
-- 현재 데이터 불러오기 (GET)
-- JSON 미리보기
-- 입력 실행 (POST)
-- 전체 반영 (PUT)
-
----
-
-## 4. FBLA 테이블 컬럼 (한글 표시)
-
-1. 하중 이름
-2. 분배 방식
-3. 하중 각도
-4. 서브빔 개수
-5. 서브빔 각도
-6. 단위 하중
-7. 방향
-8. 투영 여부
-9. 설명
-10. 내부 요소 제외
-11. 폴리곤 단위 허용
-12. 그룹 이름
-13. 노드 목록
-
----
-
-## 5. 내부 필드 매핑
-
-- 하중 이름 → `FLOOR_LOAD_TYPE_NAME`
-- 분배 방식 → `FLOOR_DIST_TYPE`
-- 하중 각도 → `LOAD_ANGLE`
-- 서브빔 개수 → `SUB_BEAM_NUM`
-- 서브빔 각도 → `SUB_BEAM_ANGLE`
-- 단위 하중 → `UNIT_SELF_WEIGHT`
-- 방향 → `DIR`
-- 투영 여부 → `OPT_PROJECTION`
-- 설명 → `DESC`
-- 내부 요소 제외 → `OPT_EXCLUDE_INNER_ELEM_AREA`
-- 폴리곤 단위 허용 → `OPT_ALLOW_POLYGON_TYPE_UNIT_AREA`
-- 그룹 이름 → `GROUP_NAME`
-- 노드 목록 → `NODES`
-
----
-
-## 6. 입력 규칙
-
-- 한 행 = 하나의 Floor Load
-- 여러 셀/행 엑셀에서 그대로 붙여넣기 가능
-- `nodes`는 `"101,102,103"` 형태 입력 후 배열로 변환
-- boolean 값 허용:
-- `true/false`
-- `TRUE/FALSE`
-- `1/0`
-- `yes/no`
-
----
-
-## 7. Payload 구조
-
-```json
-{
-  "Assign": {
-    "1": {},
-    "2": {}
-  }
-}
-```
-
----
-
-## 8. 기능 요구사항
-
-### 필수
-
-- 멀티셀 붙여넣기
-- 행 추가/삭제
-- 컬럼별 데이터 타입 변환
-- 필수값 검증
-- 잘못된 셀 하이라이트
-- JSON 미리보기
-
-### GET 기능
-
-- 현재 DB 데이터 불러오기
-- 테이블에 자동 채움
-
-### POST / PUT
-
-- POST: 신규 입력
-- PUT: 전체 덮어쓰기
-
----
+## 8. 검증 및 변환 원칙
+- 엔드포인트별 검증/변환 로직은 분리한다.
+- 필드별 오류를 셀 단위로 보여준다.
+- 붙여넣기 실패, 타입 변환 실패, 필수값 누락을 빠르게 인지할 수 있어야 한다.
+- boolean, 숫자, 배열형 입력은 실무 사용자가 이해하기 쉬운 방식으로 처리한다.
 
 ## 9. 기술 스택
-
 - Electron
 - React + TypeScript
 - Vite
-- AG Grid
+- AG Grid Community
 - axios
 - zustand
 - zod
 
----
-
-## 10. 아키텍처
-
-`Renderer(UI) → Preload Bridge → Main Process → MIDAS API`
-
----
-
-## 11. 보안 정책
-
-- MAPI-Key 콘솔 출력 금지
-- 기본값: 메모리 저장
-- 선택 시 로컬 저장 가능
-- 외부 서버 요청 금지
-- 네트워크 요청은 Base URL만 허용
-
----
-
-## 12. 사용자 메시지
-
-앱 내 표시:
-
-> 이 프로그램은 사용자의 MIDAS API 정보를 외부 서버로 전송하지 않습니다.
-> 모든 요청은 사용자의 컴퓨터에서 직접 MIDAS API 서버로 전송됩니다.
-
----
-
-## 13. 개발 우선순위
-
-1. Electron + React 기본 구조
-2. 연결 UI
-3. DB 목록 UI
-4. FBLA 테이블 구현
-5. 붙여넣기 기능
-6. validation
-7. payload 생성
-8. POST/PUT 전송
-9. GET 기능
-10. 에러 처리
-
----
-
-## 14. 완료 기준
-
-- FBLA 테이블 정상 표시
-- 엑셀 붙여넣기 가능
-- JSON 생성 정확
-- POST/PUT 동작
-- GET으로 데이터 불러오기 가능
-- 한글 UI 완성
-- 외부 서버 사용 없음
-
----
-
-끝.
+## 10. 완료 기준
+- 주요 엔드포인트 테이블이 정상 표시된다.
+- 엑셀형 복사/붙여넣기 UX가 안정적으로 동작한다.
+- JSON payload는 내부에서 정확히 생성된다.
+- POST / PUT / GET 흐름이 정상 동작한다.
+- 사용자 문구는 `MIDAS API` 기준으로 일관된다.
+- 외부 서버 로그 전송 없이 로컬 실행 기준을 지킨다.

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CellClassParams, ColDef } from "ag-grid-community";
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from "ag-grid-community";
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -28,10 +28,35 @@ const appTheme = themeQuartz.withParams({
   fontFamily: '"Segoe UI", "Noto Sans KR", sans-serif'
 });
 
+const uiText = {
+  connectionIdle: "\uBBF8\uC5F0\uACB0",
+  connectionSuccess: "\uC5F0\uACB0\uB428",
+  connectionError: "\uC2E4\uD328",
+  appTitle: "MIDAS API \uC785\uB825 \uB3C4\uAD6C",
+  appDescription:
+    "MIDAS API \uB9E4\uB274\uC5BC \uAE30\uC900\uC73C\uB85C \uC791\uC131\uB41C DB \uC785\uB825 \uB3C4\uAD6C\uC785\uB2C8\uB2E4. \uC0AC\uC6A9\uC790\uC758 \uC815\uBCF4\uB294 \uC678\uBD80 \uC11C\uBC84\uB85C \uC804\uC1A1\uB418\uC9C0 \uC54A\uC73C\uBA70, \uBAA8\uB4E0 \uC694\uCCAD\uC740 \uC0AC\uC6A9\uC790\uC758 \uCEF4\uD4E8\uD130\uC5D0\uC11C \uC9C1\uC811 MIDAS API \uC11C\uBC84\uB85C \uC804\uC1A1\uB429\uB2C8\uB2E4.",
+  manual: "MIDAS API \uB9E4\uB274\uC5BC \uBCF4\uAE30",
+  iconAlt: "MIDAS API \uC785\uB825 \uB3C4\uAD6C \uC544\uC774\uCF58",
+  workSetup: "\uC791\uC5C5 \uC124\uC815",
+  workSetupDescription: "\uC5F0\uACB0 \uC815\uBCF4\uB9CC \uC785\uB825\uD558\uBA74 \uBC14\uB85C \uC791\uC5C5\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  collapse: "\uC811\uAE30",
+  open: "\uC5F4\uAE30",
+  connectionSettings: "\uC5F0\uACB0 \uC124\uC815",
+  connectionSettingsDescription: "MIDAS API \uC694\uCCAD\uC5D0 \uC0AC\uC6A9\uD560 \uC8FC\uC18C\uC640 \uC778\uC99D \uD0A4\uB97C \uC785\uB825\uD569\uB2C8\uB2E4.",
+  connectionTest: "\uC5F0\uACB0 \uD14C\uC2A4\uD2B8",
+  apiKeyPlaceholder: "MAPI-Key \uC785\uB825",
+  dbList: "DB \uBAA9\uB85D",
+  dbListDescription: "DB \uC5D4\uB4DC\uD3EC\uC778\uD2B8\uB97C \uC120\uD0DD\uD569\uB2C8\uB2E4.",
+  search: "\uAC80\uC0C9",
+  recent: "\uCD5C\uADFC \uC0AC\uC6A9",
+  allList: "\uC804\uCCB4 \uBAA9\uB85D",
+  noResults: "\uAC80\uC0C9 \uACB0\uACFC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."
+} as const;
+
 const connectionLabelMap = {
-  idle: "미연결",
-  success: "연결됨",
-  error: "실패"
+  idle: uiText.connectionIdle,
+  success: uiText.connectionSuccess,
+  error: uiText.connectionError
 } as const;
 
 const endpointPages: Record<DbEndpointId, (props: EndpointPageProps) => JSX.Element> = {
@@ -73,7 +98,6 @@ const App = () => {
   useEffect(() => {
     void initialize();
   }, [initialize]);
-
 
   useEffect(() => {
     if (!resultMessage) {
@@ -128,9 +152,7 @@ const App = () => {
         editable: true,
         width: field.width ?? 150,
         cellEditor:
-          field.kind === "select" && field.options
-            ? "agSelectCellEditor"
-            : undefined,
+          field.kind === "select" && field.options ? "agSelectCellEditor" : undefined,
         cellEditorParams:
           field.kind === "select" && field.options
             ? { values: field.options.map((option) => option.value) }
@@ -169,7 +191,7 @@ const App = () => {
 
     const recentMap = new Map(DB_DEFINITIONS.map((item) => [item.endpoint, item]));
     return recentEndpoints
-      .slice(0, 1)
+      .slice(0, 3)
       .map((endpoint) => recentMap.get(endpoint))
       .filter((item): item is (typeof DB_DEFINITIONS)[number] => Boolean(item));
   }, [endpointSearch, recentEndpoints]);
@@ -213,12 +235,12 @@ const App = () => {
         <div className="hero-main">
           <div className="brand">
             <div className="brand-mark">
-              <img className="brand-icon" src="/app-icon.png" alt="MIDAS API 입력 도구 아이콘" />
+              <img className="brand-icon" src="/app-icon.png" alt={uiText.iconAlt} />
             </div>
             <div className="brand-copy">
               <div className="eyebrow">MIDAS API Toolkit</div>
-              <h1>MIDAS API 입력 도구</h1>
-              <p>MIDAS API 매뉴얼 기준으로 작성된 DB 입력 도구입니다.</p>
+              <h1>{uiText.appTitle}</h1>
+              <p>{uiText.appDescription}</p>
             </div>
           </div>
           <a
@@ -227,24 +249,18 @@ const App = () => {
             target="_blank"
             rel="noreferrer"
           >
-            MIDAS API 매뉴얼 보기
+            {uiText.manual}
           </a>
-        </div>
-        <div className="hero-footer">
-          <div className="security-note">
-            사용자의 MIDAS API 정보는 외부 서버로 전송되지 않으며, 모든 요청은 사용자의 컴퓨터에서 직접 MIDAS API 서버로 전송됩니다.
-          </div>
         </div>
       </header>
 
       <section className="collapsible card">
         <div className="section-header">
           <div>
-            <h2>작업 설정</h2>
-            <p>연결 정보만 입력하면 바로 작업할 수 있습니다.</p>
+            <h2>{uiText.workSetup}</h2>
           </div>
           <button type="button" className="ghost-button" onClick={() => setPanelOpen("settingsOpen", !panelState.settingsOpen)}>
-            {panelState.settingsOpen ? "접기" : "열기"}
+            {panelState.settingsOpen ? uiText.collapse : uiText.open}
           </button>
         </div>
         {panelState.settingsOpen ? (
@@ -252,12 +268,12 @@ const App = () => {
             <section className="settings-block">
               <div className="settings-block-header">
                 <div>
-                  <h3>연결 설정</h3>
-                  <p>MIDAS API 요청에 사용할 주소와 인증 키를 입력합니다.</p>
+                  <h3>{uiText.connectionSettings}</h3>
+                  <p>{uiText.connectionSettingsDescription}</p>
                 </div>
                 <div className="settings-header-actions">
                   <button onClick={() => void testConnection()} disabled={isBusy}>
-                    연결 테스트
+                    {uiText.connectionTest}
                   </button>
                   <div className={`status-chip status-${connectionState}`}>
                     {connectionLabelMap[connectionState]}
@@ -279,9 +295,10 @@ const App = () => {
                     value={apiKey}
                     onChange={(event) => setApiKey(event.target.value)}
                     type="password"
-                    placeholder="MAPI-Key 입력"
+                    placeholder={uiText.apiKeyPlaceholder}
                   />
-                </label>              </div>
+                </label>
+              </div>
             </section>
           </div>
         ) : null}
@@ -291,17 +308,17 @@ const App = () => {
         <aside className={`sidebar card ${panelState.sidebarOpen ? "" : "sidebar-collapsed"}`.trim()}>
           <div className={`section-header compact ${panelState.sidebarOpen ? "" : "collapsed"}`.trim()}>
             <div>
-              <h2>DB 목록</h2>
-              <p>DB 엔드포인트를 선택합니다.</p>
+              <h2>{uiText.dbList}</h2>
+              <p>{uiText.dbListDescription}</p>
             </div>
             <button type="button" className="ghost-button" onClick={() => setPanelOpen("sidebarOpen", !panelState.sidebarOpen)}>
-              {panelState.sidebarOpen ? "접기" : "열기"}
+              {panelState.sidebarOpen ? uiText.collapse : uiText.open}
             </button>
           </div>
           {panelState.sidebarOpen ? (
             <div className="sidebar-body">
               <label className="field sidebar-search">
-                <span>검색</span>
+                <span>{uiText.search}</span>
                 <input
                   value={endpointSearch}
                   onChange={(event) => setEndpointSearch(event.target.value)}
@@ -309,18 +326,19 @@ const App = () => {
                 />
               </label>
               {recentDefinitions.length > 0 ? (
-                <section className="db-group">
-                  <h3>최근 사용</h3>
-                  <div className="db-group-list db-group-list-recent">
+                <section className="db-group db-group-recent">
+                  <div className="db-group-heading">
+                    <h3>{uiText.recent}</h3>
+                    <span className="db-group-count">{recentDefinitions.length}</span>
+                  </div>
+                  <div className="db-quick-list">
                     {recentDefinitions.map((item) => (
                       <button
                         key={`recent-${item.endpoint}`}
-                        className={item.endpoint === selectedEndpoint ? "db-item active" : "db-item"}
+                        className={item.endpoint === selectedEndpoint ? "db-quick-item active" : "db-quick-item"}
                         onClick={() => setSelectedEndpoint(item.endpoint as DbEndpointId)}
                       >
-                        <strong>{item.label}</strong>
-                        <span>{item.description}</span>
-                        <small>{item.path}</small>
+                        <strong>{item.endpoint}</strong>
                       </button>
                     ))}
                   </div>
@@ -328,10 +346,13 @@ const App = () => {
               ) : null}
 
               <section className="db-group">
-                <h3>전체 목록</h3>
-                <div className="db-group-list">
+                <div className="db-group-heading">
+                  <h3>{uiText.allList}</h3>
+                  <span className="db-group-count">{filteredDefinitions.length}</span>
+                </div>
+                <div className="db-group-list db-group-list-compact">
                   {filteredDefinitions.length === 0 ? (
-                    <div className="empty-state">검색 결과가 없습니다.</div>
+                    <div className="empty-state">{uiText.noResults}</div>
                   ) : (
                     filteredDefinitions.map((item) => (
                       <button
@@ -339,9 +360,14 @@ const App = () => {
                         className={item.endpoint === selectedEndpoint ? "db-item active" : "db-item"}
                         onClick={() => setSelectedEndpoint(item.endpoint as DbEndpointId)}
                       >
-                        <strong>{item.label}</strong>
-                        <span>{item.description}</span>
-                        <small>{item.path}</small>
+                        <div className="db-item-accent" aria-hidden="true" />
+                        <div className="db-item-main">
+                          <div className="db-item-topline">
+                            <strong>{item.endpoint}</strong>
+                            <small>{item.path}</small>
+                          </div>
+                          <span>{item.description}</span>
+                        </div>
                       </button>
                     ))
                   )}
@@ -350,7 +376,11 @@ const App = () => {
             </div>
           ) : (
             <>
-              <div className="sidebar-collapsed-title">DB<br />목록</div>
+              <div className="sidebar-collapsed-title">
+                DB
+                <br />
+                {uiText.dbList.replace("DB ", "")}
+              </div>
               <div className="sidebar-collapsed-current">
                 <div className="sidebar-collapsed-label">{selectedEndpoint}</div>
                 <div className="sidebar-collapsed-description">{definition.description}</div>
@@ -375,12 +405,3 @@ const App = () => {
 };
 
 export default App;
-
-
-
-
-
-
-
-
-
