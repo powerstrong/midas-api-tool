@@ -13,13 +13,19 @@ import { WorkResultPanel } from "./features/results/WorkResultPanel";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 const appTheme = themeQuartz.withParams({
-  backgroundColor: "#111827",
-  foregroundColor: "#e5eefb",
-  headerBackgroundColor: "#172033",
-  headerTextColor: "#cdd9ed",
-  oddRowBackgroundColor: "#0f172a",
-  borderColor: "#24324b",
-  wrapperBorderRadius: 18
+  backgroundColor: "#0b1220",
+  foregroundColor: "#e8f1ff",
+  headerBackgroundColor: "#142033",
+  headerTextColor: "#d8e6fb",
+  oddRowBackgroundColor: "#0d1728",
+  borderColor: "#22314c",
+  wrapperBorderRadius: 20,
+  rowHoverColor: "rgba(64, 124, 220, 0.12)",
+  selectedRowBackgroundColor: "rgba(47, 116, 201, 0.14)",
+  rangeSelectionBackgroundColor: "rgba(84, 176, 255, 0.12)",
+  rangeSelectionBorderColor: "rgba(147, 213, 255, 0.72)",
+  accentColor: "#78c4ff",
+  fontFamily: '"Segoe UI", "Noto Sans KR", sans-serif'
 });
 
 const connectionLabelMap = {
@@ -369,6 +375,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
