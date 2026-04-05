@@ -85,8 +85,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   panelState: defaultPanelState,
   recentEndpoints: [],
   connectionState: "idle",
-  selectedEndpoint: "FBLA",
-  rows: getInitialRows("FBLA"),
+  selectedEndpoint: "NODE",
+  rows: getInitialRows("NODE"),
   issues: [],
   selectedRowIds: [],
   resultMessage: undefined,
@@ -291,3 +291,4 @@ export const useAppStore = create<AppState>((set, get) => ({
 }));
 
 export const getSelectedDefinition = (endpoint: DbEndpointId) => DB_BY_ENDPOINT[endpoint];
+
