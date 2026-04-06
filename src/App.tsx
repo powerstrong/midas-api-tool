@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import type { CellClassParams, ColDef } from "ag-grid-community";
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from "ag-grid-community";
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -66,6 +66,34 @@ const endpointPages: Record<DbEndpointId, (props: EndpointPageProps) => JSX.Elem
   CNLD: CNLDPage,
   NODE: NODEPage
 };
+
+const heroLinks = [
+  {
+    icon: "github.png",
+    title: "GitHub 바로가기",
+    href: "https://github.com/powerstrong/midas-api-tool"
+  },
+  {
+    icon: "midasgen.jpg",
+    title: "MIDAS GEN 매뉴얼 바로가기",
+    href: "https://support.midasuser.com/hc/ko/articles/49909210848537-MIDAS-GEN-NX-Online-Manual"
+  },
+  {
+    icon: "midascivil.jpg",
+    title: "MIDAS Civil 매뉴얼 바로가기",
+    href: "https://support.midasuser.com/hc/ko/articles/38868325423769-MIDAS-CIVIL-NX-KR-Online-Manual"
+  },
+  {
+    icon: "midasapi.png",
+    title: "MIDAS API 매뉴얼 바로가기",
+    href: "https://support.midasuser.com/hc/ko/p/gate_api_manual"
+  },
+  {
+    icon: "lime.png",
+    title: "라임구조엔지니어링 바로가기",
+    href: "http://www.xn--989almi3wt4jd4hrmb.kr/main"
+  }
+] as const;
 
 
 const getApiTypeLabel = (kind: FieldKind) => {
@@ -228,7 +256,7 @@ const App = () => {
     }
 
     return sortedDefinitions.filter((item) => {
-      const haystack = `${item.endpoint} ${item.label} ${item.description}`.toLowerCase();
+      const haystack = `${item.endpoint} ${item.label ?? ""} ${item.description}`.toLowerCase();
       return haystack.includes(keyword);
     });
   }, [endpointSearch, sortedDefinitions]);
@@ -260,7 +288,7 @@ const App = () => {
         <div className="hero-main">
           <div className="brand">
             <div className="brand-mark">
-              <img className="brand-icon" src="/app-icon.png" alt={uiText.iconAlt} />
+              <img className="brand-icon" src={`${import.meta.env.BASE_URL}app-icon.png`} alt={uiText.iconAlt} />
             </div>
             <div className="brand-copy">
               <div className="eyebrow">MIDAS API Toolkit</div>
@@ -268,14 +296,21 @@ const App = () => {
               <p>{uiText.appDescription}</p>
             </div>
           </div>
-          <a
-            className="manual-link"
-            href="https://support.midasuser.com/hc/ko/p/gate_api_manual"
-            target="_blank"
-            rel="noreferrer"
-          >
-            {uiText.manual}
-          </a>
+          <div className="hero-links" aria-label="바로가기 링크">
+            {heroLinks.map((item) => (
+              <a
+                key={item.title}
+                className="hero-link-icon"
+                href={item.href}
+                title={item.title}
+                aria-label={item.title}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <img className="hero-link-image" src={`${import.meta.env.BASE_URL}${item.icon}`} alt="" aria-hidden="true" />
+              </a>
+            ))}
+          </div>
         </div>
       </header>
 
@@ -354,7 +389,6 @@ const App = () => {
                 <section className="db-group db-group-recent">
                   <div className="db-group-heading">
                     <h3>{uiText.recent}</h3>
-                    <span className="db-group-count">{recentDefinitions.length}</span>
                   </div>
                   <div className="db-quick-list">
                     {recentDefinitions.map((item) => (
@@ -371,7 +405,7 @@ const App = () => {
               ) : null}
 
               <section className="db-group">
-                <div className="db-group-heading">
+                <div className="db-group-heading db-group-heading-spaced">
                   <h3>{uiText.allList}</h3>
                   <span className="db-group-count">{filteredDefinitions.length}</span>
                 </div>
@@ -430,3 +464,6 @@ const App = () => {
 };
 
 export default App;
+
+
+
