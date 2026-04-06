@@ -34,6 +34,7 @@ export interface DbDefinition {
   description: string;
   path: string;
   keyLabel: string;
+  keyHelperText?: string;
   fields: FieldDefinition[];
 }
 

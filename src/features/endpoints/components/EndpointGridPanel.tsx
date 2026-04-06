@@ -669,11 +669,14 @@ export const EndpointGridPanel = ({
   const mergedColumnDefs = useMemo<ColDef<GridRow>[]>(() => {
     return columnDefs.map((columnDef, definitionIndex) => {
       const fieldKey = String(columnDef.field ?? "");
+      const fieldDefinition = definition.fields.find((field) => field.key === fieldKey);
+      const helperText = columnDef.headerTooltip ?? fieldDefinition?.helperText;
       const originalCellClass = columnDef.cellClass;
       const isFirstColumn = definitionIndex === 0;
 
       return {
         ...columnDef,
+        headerTooltip: helperText,
         editable: (params) => params.node.rowPinned !== "bottom" && Boolean(columnDef.editable),
         colSpan: (params) => {
           if (params.node.rowPinned === "bottom" && isFirstColumn) {
@@ -695,7 +698,7 @@ export const EndpointGridPanel = ({
           const columnIndex = visibleColumnIds.indexOf(fieldKey);
 
           if (params.node.rowPinned === "bottom") {
-            classes.push(isFirstColumn ? "grid-add-row-cell" : "grid-add-row-cell-hidden");
+            classes.push("grid-add-row-cell");
             return classes;
           }
 
@@ -745,7 +748,7 @@ export const EndpointGridPanel = ({
         }
       } satisfies ColDef<GridRow>;
     });
-  }, [columnDefs, focusedCell, isCopyFlashing, selectedRange, visibleColumnIds]);
+  }, [columnDefs, definition.fields, focusedCell, isCopyFlashing, selectedRange, visibleColumnIds]);
 
   return (
     <div className="grid-panel card">
@@ -816,6 +819,7 @@ export const EndpointGridPanel = ({
           undoRedoCellEditingLimit={30}
           getRowId={(params) => params.data.__rowId ?? params.data.KEY}
           rowClassRules={rowClassRules}
+          tooltipShowDelay={500}
           onGridReady={handleGridReady}
           onCellFocused={handleCellFocused}
           onCellClicked={handleCellClicked}

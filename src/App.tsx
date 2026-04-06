@@ -184,6 +184,7 @@ const App = () => {
     const defs: ColDef<GridRow>[] = [
       {
         headerName: definition.keyLabel,
+        headerTooltip: definition.keyHelperText,
         field: "KEY",
         editable: true,
         width: 110,

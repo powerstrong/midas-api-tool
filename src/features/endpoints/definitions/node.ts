@@ -9,6 +9,7 @@ export const nodeDefinition: DbDefinition = {
   description: nodeHelp.description,
   path: "db/NODE",
   keyLabel: "NODE",
+  keyHelperText: "절점의 고유 번호(ID)입니다.",
   fields: [
     { key: "X", label: "X", kind: "number", width: 120, helperText: nodeHelp.fieldHelperText.X },
     { key: "Y", label: "Y", kind: "number", width: 120, helperText: nodeHelp.fieldHelperText.Y },
