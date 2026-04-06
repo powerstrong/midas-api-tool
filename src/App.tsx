@@ -74,6 +74,11 @@ const heroLinks = [
     href: "https://github.com/powerstrong/midas-api-tool"
   },
   {
+    icon: "lime.png",
+    title: "라임구조엔지니어링 바로가기",
+    href: "http://www.xn--989almi3wt4jd4hrmb.kr/main"
+  },
+  {
     icon: "midasgen.jpg",
     title: "MIDAS GEN 매뉴얼 바로가기",
     href: "https://support.midasuser.com/hc/ko/articles/49909210848537-MIDAS-GEN-NX-Online-Manual"
@@ -87,11 +92,6 @@ const heroLinks = [
     icon: "midasapi.png",
     title: "MIDAS API 매뉴얼 바로가기",
     href: "https://support.midasuser.com/hc/ko/p/gate_api_manual"
-  },
-  {
-    icon: "lime.png",
-    title: "라임구조엔지니어링 바로가기",
-    href: "http://www.xn--989almi3wt4jd4hrmb.kr/main"
   }
 ] as const;
 
