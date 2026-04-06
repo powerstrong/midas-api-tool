@@ -1175,9 +1175,15 @@ code {
   pointer-events: none !important;
   max-width: 280px !important;
   word-break: keep-all !important;
-  white-space: normal !important;
+  white-space: pre-line !important;
   z-index: 9999 !important;
   animation: tooltip-fade-in 180ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.ag-tooltip::first-line {
+  font-weight: 800 !important;
+  color: #78c4ff !important; /* 강조색 (MIDAS Blue 계열) */
+  font-size: 14px !important;
 }
 
 @keyframes tooltip-fade-in {

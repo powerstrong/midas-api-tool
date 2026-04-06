@@ -1,4 +1,4 @@
-﻿import type { DbDefinition } from "../../../shared/midas";
+import type { DbDefinition } from "../../../shared/midas";
 import { cnldHelp } from "../help/cnld";
 
 export const cnldDefinition: DbDefinition = {
@@ -9,15 +9,16 @@ export const cnldDefinition: DbDefinition = {
   description: cnldHelp.description,
   path: "db/CNLD",
   keyLabel: "NODE",
+  keyHelperText: cnldHelp.keyHelperText,
   fields: [
-    { key: "ID", label: "ID", kind: "integer", width: 100 },
-    { key: "LCNAME", label: "LCNAME", kind: "text", width: 140 },
-    { key: "GROUP_NAME", label: "GROUP_NAME", kind: "text", width: 150 },
-    { key: "FX", label: "FX", kind: "number", width: 110 },
-    { key: "FY", label: "FY", kind: "number", width: 110 },
-    { key: "FZ", label: "FZ", kind: "number", width: 110 },
-    { key: "MX", label: "MX", kind: "number", width: 110 },
-    { key: "MY", label: "MY", kind: "number", width: 110 },
-    { key: "MZ", label: "MZ", kind: "number", width: 110 }
+    { key: "ID", label: "ID", kind: "integer", width: 100, helperText: cnldHelp.fieldHelperText.ID },
+    { key: "LCNAME", label: "LCNAME", kind: "text", width: 140, helperText: cnldHelp.fieldHelperText.LCNAME },
+    { key: "GROUP_NAME", label: "GROUP_NAME", kind: "text", width: 150, helperText: cnldHelp.fieldHelperText.GROUP_NAME },
+    { key: "FX", label: "FX", kind: "number", width: 110, helperText: cnldHelp.fieldHelperText.FX },
+    { key: "FY", label: "FY", kind: "number", width: 110, helperText: cnldHelp.fieldHelperText.FY },
+    { key: "FZ", label: "FZ", kind: "number", width: 110, helperText: cnldHelp.fieldHelperText.FZ },
+    { key: "MX", label: "MX", kind: "number", width: 110, helperText: cnldHelp.fieldHelperText.MX },
+    { key: "MY", label: "MY", kind: "number", width: 110, helperText: cnldHelp.fieldHelperText.MY },
+    { key: "MZ", label: "MZ", kind: "number", width: 110, helperText: cnldHelp.fieldHelperText.MZ }
   ]
 };
