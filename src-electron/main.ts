@@ -31,7 +31,7 @@ const defaultSettings = (): AppSettings => ({
 const sanitizeBaseUrl = (value: string) => value.trim().replace(/\/+$/, "");
 
 const sanitizeRecentEndpoints = (value: unknown): DbEndpointId[] => {
-  const validEndpoints: DbEndpointId[] = ["FBLA", "STLD", "CNLD"];
+  const validEndpoints: DbEndpointId[] = ["FBLA", "STLD", "CNLD", "NODE"];
   if (!Array.isArray(value)) {
     return [];
   }
