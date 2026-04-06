@@ -752,8 +752,8 @@ export const EndpointGridPanel = ({
       <div className="grid-toolbar">
         <div className="grid-toolbar-main">
           <div>
-            <div className="grid-title">입력 테이블</div>
-            <div className="grid-subtitle">여러 셀 범위를 복사하고 시작 셀 기준으로 붙여넣을 수 있습니다.</div>
+            <div className="grid-title">{definition.endpoint}</div>
+            <div className="grid-subtitle">{definition.description}</div>
           </div>
           <div className="grid-meta">
             {pasteSummary ? (
@@ -846,3 +846,5 @@ export const EndpointGridPanel = ({
     </div>
   );
 };
+
+
