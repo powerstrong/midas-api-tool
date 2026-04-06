@@ -8,7 +8,8 @@
     "start": "npm run dev",
     "build": "tsc -p tsconfig.electron.json && vite build",
     "preview": "vite preview",
-    "dist:portable": "npm run build && electron-builder --win portable"
+    "dist:win": "npm run build && electron-builder --win nsis",
+    "dist:dir": "npm run build && electron-builder --win dir"
   },
   "dependencies": {
     "ag-grid-community": "^33.2.4",
@@ -47,13 +48,21 @@
     "win": {
       "target": [
         {
-          "target": "portable",
+          "target": "nsis",
           "arch": [
             "x64"
           ]
         }
       ],
-      "artifactName": "midas-api-tool-${version}-portable.${ext}"
+      "artifactName": "midas-api-tool-${version}-setup.${ext}"
+    },
+    "compression": "store",
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     }
   }
 }
