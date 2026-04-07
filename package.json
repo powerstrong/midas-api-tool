@@ -1,72 +1,73 @@
 {
-  "name": "midas-api-tool",
-  "version": "0.2.0",
-  "private": true,
-  "main": "dist-electron/src-electron/main.js",
-  "scripts": {
-    "dev": "concurrently -k -n tsc,vite,electron \"tsc -p tsconfig.electron.json --watch\" \"vite\" \"wait-on tcp:5173 file:dist-electron/src-electron/main.js && electron .\"",
-    "start": "npm run dev",
-    "build": "tsc -p tsconfig.electron.json && vite build",
-    "preview": "vite preview",
-    "dist:win": "npm run build && electron-builder --win nsis",
-    "dist:dir": "npm run build && electron-builder --win dir"
-  },
-  "dependencies": {
-    "ag-grid-community": "^33.2.4",
-    "ag-grid-react": "^33.2.4",
-    "axios": "^1.9.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "zod": "^3.24.3",
-    "zustand": "^5.0.3"
-  },
-  "devDependencies": {
-    "@types/node": "^22.15.2",
-    "@types/react": "^19.1.2",
-    "@types/react-dom": "^19.1.2",
-    "@vitejs/plugin-react": "^4.4.1",
-    "concurrently": "^9.1.2",
-    "electron": "^35.1.5",
-    "electron-builder": "^24.13.3",
-    "typescript": "^5.8.3",
-    "vite": "^6.3.2",
-    "wait-on": "^8.0.3"
-  },
-  "build": {
-    "appId": "com.powerstrong.midas-api-tool",
-    "productName": "MIDAS API Tool",
-    "asar": true,
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "dist-electron/**/*",
-      "public/**/*",
-      "package.json"
-    ],
-    "win": {
-      "icon": "public/app-icon.ico",
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "artifactName": "midas-api-tool-${version}-setup.${ext}"
-    },
-    "compression": "store",
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
-      "installerIcon": "public/app-icon.ico",
-      "uninstallerIcon": "public/app-icon.ico",
-      "installerHeaderIcon": "public/app-icon.ico",
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
-    }
-  }
+    "name":  "midas-api-tool",
+    "version":  "0.7.0",
+    "private":  true,
+    "main":  "dist-electron/src-electron/main.js",
+    "scripts":  {
+                    "dev":  "concurrently -k -n tsc,vite,electron \"tsc -p tsconfig.electron.json --watch\" \"vite\" \"wait-on tcp:5173 file:dist-electron/src-electron/main.js \u0026\u0026 electron .\"",
+                    "start":  "npm run dev",
+                    "build":  "tsc -p tsconfig.electron.json \u0026\u0026 vite build",
+                    "preview":  "vite preview",
+                    "dist:win":  "npm run build \u0026\u0026 electron-builder --win nsis",
+                    "dist:dir":  "npm run build \u0026\u0026 electron-builder --win dir"
+                },
+    "dependencies":  {
+                         "ag-grid-community":  "^33.2.4",
+                         "ag-grid-react":  "^33.2.4",
+                         "axios":  "^1.9.0",
+                         "react":  "^19.1.0",
+                         "react-dom":  "^19.1.0",
+                         "zod":  "^3.24.3",
+                         "zustand":  "^5.0.3"
+                     },
+    "devDependencies":  {
+                            "@types/node":  "^22.15.2",
+                            "@types/react":  "^19.1.2",
+                            "@types/react-dom":  "^19.1.2",
+                            "@vitejs/plugin-react":  "^4.4.1",
+                            "concurrently":  "^9.1.2",
+                            "electron":  "^35.1.5",
+                            "electron-builder":  "^24.13.3",
+                            "typescript":  "^5.8.3",
+                            "vite":  "^6.3.2",
+                            "wait-on":  "^8.0.3"
+                        },
+    "build":  {
+                  "appId":  "com.powerstrong.midas-api-tool",
+                  "productName":  "MIDAS API Tool",
+                  "asar":  true,
+                  "directories":  {
+                                      "output":  "release"
+                                  },
+                  "files":  [
+                                "dist/**/*",
+                                "dist-electron/**/*",
+                                "public/**/*",
+                                "package.json"
+                            ],
+                  "win":  {
+                              "icon":  "public/app-icon.ico",
+                              "target":  [
+                                             {
+                                                 "target":  "nsis",
+                                                 "arch":  [
+                                                              "x64"
+                                                          ]
+                                             }
+                                         ],
+                              "artifactName":  "midas-api-tool-${version}-setup.${ext}"
+                          },
+                  "compression":  "store",
+                  "nsis":  {
+                               "oneClick":  false,
+                               "perMachine":  false,
+                               "allowToChangeInstallationDirectory":  true,
+                               "installerIcon":  "public/app-icon.ico",
+                               "uninstallerIcon":  "public/app-icon.ico",
+                               "installerHeaderIcon":  "public/app-icon.ico",
+                               "createDesktopShortcut":  true,
+                               "createStartMenuShortcut":  true
+                           }
+              }
 }
+

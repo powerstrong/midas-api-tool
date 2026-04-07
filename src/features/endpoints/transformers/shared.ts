@@ -30,7 +30,7 @@ export const parseBoolean = (value: string) => {
     return { ok: true as const, value: booleanMap[normalized] };
   }
 
-  return { ok: false as const, issue: "boolean 형식이 올바르지 않습니다." };
+  return { ok: false as const, issue: "boolean \uD615\uC2DD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." };
 };
 
 export const parseIntegerArray = (value: string) => {
@@ -48,13 +48,86 @@ export const parseIntegerArray = (value: string) => {
   const hasError = parsed.some((result) => !result.success);
 
   if (hasError) {
-    return { ok: false as const, issue: "정수 배열 형식이 올바르지 않습니다." };
+    return { ok: false as const, issue: "\uC815\uC218 \uBC30\uC5F4 \uD615\uC2DD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." };
   }
 
   return {
     ok: true as const,
     value: parsed.map((result) => (result as { success: true; data: number }).data)
   };
+};
+
+export const parseNumberArray = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return { ok: true as const, value: undefined };
+  }
+
+  const items = trimmed
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  const parsed = items.map((item) => numberSchema.safeParse(item));
+  const hasError = parsed.some((result) => !result.success);
+
+  if (hasError) {
+    return { ok: false as const, issue: "\uC22B\uC790 \uBC30\uC5F4 \uD615\uC2DD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." };
+  }
+
+  return {
+    ok: true as const,
+    value: parsed.map((result) => (result as { success: true; data: number }).data)
+  };
+};
+
+export const parseStringArray = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return { ok: true as const, value: undefined };
+  }
+
+  return {
+    ok: true as const,
+    value: trimmed
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+  };
+};
+
+const parseJson = (value: string) => {
+  try {
+    return { ok: true as const, value: JSON.parse(value) };
+  } catch {
+    return { ok: false as const, issue: "JSON \uD615\uC2DD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." };
+  }
+};
+
+export const parseObject = (value: string) => {
+  const parsed = parseJson(value);
+  if (!parsed.ok) {
+    return parsed;
+  }
+
+  if (!parsed.value || typeof parsed.value !== "object" || Array.isArray(parsed.value)) {
+    return { ok: false as const, issue: "\uAC1D\uCCB4 JSON\uC744 \uC785\uB825\uD574\uC57C \uD569\uB2C8\uB2E4." };
+  }
+
+  return parsed;
+};
+
+export const parseObjectArray = (value: string) => {
+  const parsed = parseJson(value);
+  if (!parsed.ok) {
+    return parsed;
+  }
+
+  if (!Array.isArray(parsed.value) || parsed.value.some((item) => !item || typeof item !== "object" || Array.isArray(item))) {
+    return { ok: false as const, issue: "\uAC1D\uCCB4 \uBC30\uC5F4 JSON\uC744 \uC785\uB825\uD574\uC57C \uD569\uB2C8\uB2E4." };
+  }
+
+  return parsed;
 };
 
 export const parseValue = (kind: DbDefinition["fields"][number]["kind"], value: string) => {
@@ -71,14 +144,14 @@ export const parseValue = (kind: DbDefinition["fields"][number]["kind"], value: 
     const result = integerSchema.safeParse(normalized);
     return result.success
       ? { ok: true as const, value: result.data }
-      : { ok: false as const, issue: "정수 형식이 올바르지 않습니다." };
+      : { ok: false as const, issue: "\uC815\uC218 \uD615\uC2DD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." };
   }
 
   if (kind === "number") {
     const result = numberSchema.safeParse(normalized);
     return result.success
       ? { ok: true as const, value: result.data }
-      : { ok: false as const, issue: "숫자 형식이 올바르지 않습니다." };
+      : { ok: false as const, issue: "\uC22B\uC790 \uD615\uC2DD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." };
   }
 
   if (kind === "boolean") {
@@ -87,6 +160,22 @@ export const parseValue = (kind: DbDefinition["fields"][number]["kind"], value: 
 
   if (kind === "integer-array") {
     return parseIntegerArray(normalized);
+  }
+
+  if (kind === "number-array") {
+    return parseNumberArray(normalized);
+  }
+
+  if (kind === "string-array") {
+    return parseStringArray(normalized);
+  }
+
+  if (kind === "object") {
+    return parseObject(normalized);
+  }
+
+  if (kind === "object-array") {
+    return parseObjectArray(normalized);
   }
 
   return { ok: true as const, value: normalized };
@@ -103,7 +192,12 @@ export const objectToString = (value: unknown) => {
   }
 
   if (Array.isArray(value)) {
-    return value.join(",");
+    const hasObject = value.some((item) => item !== null && typeof item === "object");
+    return hasObject ? JSON.stringify(value) : value.join(",");
+  }
+
+  if (typeof value === "object") {
+    return JSON.stringify(value);
   }
 
   if (typeof value === "boolean") {

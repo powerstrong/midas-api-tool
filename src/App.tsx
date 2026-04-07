@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import type { CellClassParams, ColDef } from "ag-grid-community";
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from "ag-grid-community";
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -67,7 +67,23 @@ const endpointPages: Record<DbEndpointId, (props: EndpointPageProps) => JSX.Elem
   FBLA: FBLAPage,
   STLD: STLDPage,
   CNLD: CNLDPage,
-  NODE: NODEPage
+  NODE: NODEPage,
+  BODF: NODEPage,
+  BMLD: NODEPage,
+  SDSP: NODEPage,
+  NMAS: NODEPage,
+  LTOM: NODEPage,
+  NBOF: NODEPage,
+  PSLT: NODEPage,
+  PRES: NODEPage,
+  PNLD: NODEPage,
+  PNLA: NODEPage,
+  FBLD: NODEPage,
+  FMLD: NODEPage,
+  POSP: NODEPage,
+  EPST: NODEPage,
+  EPSE: NODEPage,
+  POSL: NODEPage
 };
 
 const heroLinks = [
@@ -122,6 +138,51 @@ const getApiTypeLabel = (kind: FieldKind) => {
   }
 };
 
+
+const buildFieldTooltip = (field: { label: string; kind: FieldKind; placeholder?: string; helperText?: string }) => {
+  if (field.helperText) {
+    return field.helperText;
+  }
+
+  const exampleText = field.placeholder
+    ? `\n\uC608: ${field.placeholder}`
+    : field.kind === "integer-array"
+      ? "\n\uC608: 101,102,103"
+      : field.kind === "number-array"
+        ? "\n\uC608: 0,0,-1"
+        : field.kind === "string-array"
+          ? "\n\uC608: A,B,C"
+          : field.kind === "object"
+            ? '\n\uC608: {"KEY":1}'
+            : field.kind === "object-array"
+              ? '\n\uC608: [{"KEY":1}]'
+              : "";
+
+  switch (field.kind) {
+    case "text":
+      return `${field.label}\uC744(\uB97C) \uBB38\uC790\uC5F4\uB85C \uC785\uB825\uD569\uB2C8\uB2E4.${exampleText}`;
+    case "integer":
+      return `${field.label}\uC744(\uB97C) \uC815\uC218\uB85C \uC785\uB825\uD569\uB2C8\uB2E4.${exampleText}`;
+    case "number":
+      return `${field.label}\uC744(\uB97C) \uC22B\uC790\uB85C \uC785\uB825\uD569\uB2C8\uB2E4.${exampleText}`;
+    case "boolean":
+      return `${field.label}\uC744(\uB97C) true/false, 1/0, yes/no \uD615\uC2DD\uC73C\uB85C \uC785\uB825\uD569\uB2C8\uB2E4.`;
+    case "integer-array":
+      return `${field.label}\uC744(\uB97C) \uC27C\uD45C\uB85C \uAD6C\uBD84\uD55C \uC815\uC218 \uBC30\uC5F4\uB85C \uC785\uB825\uD569\uB2C8\uB2E4.${exampleText}`;
+    case "number-array":
+      return `${field.label}\uC744(\uB97C) \uC27C\uD45C\uB85C \uAD6C\uBD84\uD55C \uC22B\uC790 \uBC30\uC5F4\uB85C \uC785\uB825\uD569\uB2C8\uB2E4.${exampleText}`;
+    case "string-array":
+      return `${field.label}\uC744(\uB97C) \uC27C\uD45C\uB85C \uAD6C\uBD84\uD55C \uBB38\uC790\uC5F4 \uBC30\uC5F4\uB85C \uC785\uB825\uD569\uB2C8\uB2E4.${exampleText}`;
+    case "object":
+      return `${field.label}\uC744(\uB97C) JSON \uAC1D\uCCB4 \uD615\uC2DD\uC73C\uB85C \uC785\uB825\uD569\uB2C8\uB2E4.${exampleText}`;
+    case "object-array":
+      return `${field.label}\uC744(\uB97C) JSON \uAC1D\uCCB4 \uBC30\uC5F4 \uD615\uC2DD\uC73C\uB85C \uC785\uB825\uD569\uB2C8\uB2E4.${exampleText}`;
+    case "select":
+      return `${field.label}\uC744(\uB97C) \uC120\uD0DD\uD56D\uBAA9\uC5D0\uC11C \uACE0\uB985\uB2C8\uB2E4.${exampleText}`;
+    default:
+      return field.label;
+  }
+};
 const GridHeader = (props: {
   displayName?: string;
   typeLabel?: string;
@@ -189,7 +250,7 @@ const App = () => {
     const defs: ColDef<GridRow>[] = [
       {
         headerName: definition.keyLabel,
-        headerTooltip: definition.keyHelperText,
+        headerTooltip: definition.keyHelperText ?? `${definition.keyLabel} 기준 번호를 입력합니다.`,
         field: "KEY",
         editable: true,
         width: 110,
@@ -210,6 +271,7 @@ const App = () => {
         headerComponentParams: {
           typeLabel: getApiTypeLabel(field.kind)
         },
+        headerTooltip: buildFieldTooltip(field),
         cellEditor:
           field.kind === "select" && field.options ? "agSelectCellEditor" : undefined,
         cellEditorParams:
@@ -391,7 +453,7 @@ const App = () => {
                 <input
                   value={endpointSearch}
                   onChange={(event) => setEndpointSearch(event.target.value)}
-                  placeholder="NODE, ELEM, FBLA, STLD, CNLD..."
+                  placeholder="NODE, ELEM, FBLA, STLD, CNLD, BODF, BMLD..."
                 />
               </label>
               {recentDefinitions.length > 0 ? (
@@ -473,6 +535,13 @@ const App = () => {
 };
 
 export default App;
+
+
+
+
+
+
+
 
 
 

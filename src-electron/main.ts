@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, shell, Menu } from "electron";
+﻿import { app, BrowserWindow, dialog, ipcMain, shell, Menu } from "electron";
 import path from "node:path";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import axios from "axios";
@@ -39,7 +39,30 @@ const buildDeletePath = (pathName: string, ids?: number[]) => {
 };
 
 const sanitizeRecentEndpoints = (value: unknown): DbEndpointId[] => {
-  const validEndpoints: DbEndpointId[] = ["FBLA", "STLD", "CNLD", "NODE", "ELEM"];
+  const validEndpoints: DbEndpointId[] = [
+    "FBLA",
+    "STLD",
+    "CNLD",
+    "NODE",
+    "ELEM",
+    "BODF",
+    "BMLD",
+    "SDSP",
+    "NMAS",
+    "LTOM",
+    "NBOF",
+    "PSLT",
+    "PRES",
+    "PNLD",
+    "PNLA",
+    "FBLD",
+    "FMLD",
+    "POSP",
+    "EPST",
+    "EPSE",
+    "POSL"
+  ];
+
   if (!Array.isArray(value)) {
     return [];
   }
@@ -109,11 +132,7 @@ const exportSchemaFiles = async (schemaFolderPath: string) => {
       `${JSON.stringify(createSchemaExportData(), null, 2)}\n`,
       "utf8"
     ),
-    writeFile(
-      path.join(schemaFolderPath, "db-schema-ko.md"),
-      `${createSchemaMarkdown()}\n`,
-      "utf8"
-    )
+    writeFile(path.join(schemaFolderPath, "db-schema-ko.md"), `${createSchemaMarkdown()}\n`, "utf8")
   ]);
 };
 
@@ -134,7 +153,6 @@ const ensureSchemaFilesIfNeeded = async (folderPath: string) => {
     return { created: true };
   }
 };
-
 
 const createWindow = async () => {
   const appIconPath = path.join(app.getAppPath(), "public", "app-icon.png");
@@ -190,7 +208,7 @@ ipcMain.handle("midas:update-settings", async (_event, patch: AppSettingsPatch) 
 ipcMain.handle("midas:choose-schema-folder", async (): Promise<FolderSelectionResult> => {
   const current = await readSettings();
   const result = await dialog.showOpenDialog({
-    title: "스키마 저장 폴더 선택",
+    title: "\uC2A4\uD0A4\uB9C8 \uC800\uC7A5 \uD3F4\uB354 \uC120\uD0DD",
     defaultPath: current.schemaFolderPath || app.getPath("documents"),
     properties: ["openDirectory", "createDirectory"]
   });
@@ -206,7 +224,7 @@ ipcMain.handle("midas:choose-schema-folder", async (): Promise<FolderSelectionRe
   if (schemaResult.created) {
     return {
       settings: next,
-      message: "스키마 파일이 없어 기본 파일을 생성했습니다."
+      message: "\uC2A4\uD0A4\uB9C8 \uD30C\uC77C\uC774 \uC5C6\uC5B4 \uAE30\uBCF8 \uD30C\uC77C\uC744 \uC0DD\uC131\uD588\uC2B5\uB2C8\uB2E4."
     };
   }
 
@@ -216,6 +234,7 @@ ipcMain.handle("midas:choose-schema-folder", async (): Promise<FolderSelectionRe
 ipcMain.handle("midas:open-external", async (_event, url: string) => {
   return shell.openExternal(url);
 });
+
 ipcMain.handle("midas:open-schema-folder", async () => {
   const current = await readSettings();
   if (!current.schemaFolderPath) {
@@ -233,15 +252,15 @@ ipcMain.handle("midas:request", async (_event, input: RequestInput): Promise<Req
   const definition = DB_BY_ENDPOINT[input.endpoint];
 
   if (!baseUrl) {
-    return { ok: false, message: "Base URL을 입력하세요." };
+    return { ok: false, message: "Base URL\uC744 \uC785\uB825\uD558\uC138\uC694." };
   }
 
   if (!apiKey) {
-    return { ok: false, message: "MAPI-Key를 입력하세요." };
+    return { ok: false, message: "MAPI-Key\uB97C \uC785\uB825\uD558\uC138\uC694." };
   }
 
   if (input.method === "DELETE" && (!input.ids || input.ids.length === 0)) {
-    return { ok: false, message: "삭제할 ID가 없습니다." };
+    return { ok: false, message: "\uC0AD\uC81C\uD560 ID\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4." };
   }
 
   let targetUrl: string;
@@ -250,11 +269,11 @@ ipcMain.handle("midas:request", async (_event, input: RequestInput): Promise<Req
     const requestPath = input.method === "DELETE" ? buildDeletePath(definition.path, input.ids) : definition.path;
     targetUrl = new URL(requestPath, `${baseUrl}/`).toString();
   } catch {
-    return { ok: false, message: "Base URL을 입력하세요." };
+    return { ok: false, message: "Base URL\uC744 \uC785\uB825\uD558\uC138\uC694." };
   }
 
   if (!isAllowedUrl(baseUrl, targetUrl)) {
-    return { ok: false, message: "허용되지 않은 요청 주소입니다." };
+    return { ok: false, message: "\uD5C8\uC6A9\uB418\uC9C0 \uC54A\uC740 \uC694\uCCAD \uC8FC\uC18C\uC785\uB2C8\uB2E4." };
   }
 
   try {
@@ -281,14 +300,14 @@ ipcMain.handle("midas:request", async (_event, input: RequestInput): Promise<Req
     return {
       ok: false,
       status: response.status,
-      message: `요청이 실패했습니다. (${response.status})`,
+      message: `\uC694\uCCAD\uC774 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. (${response.status})`,
       details: response.data
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       return {
         ok: false,
-        message: error.message || "네트워크 요청 중 오류가 발생했습니다.",
+        message: error.message || "\uB124\uD2B8\uC6CC\uD06C \uC694\uCCAD \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.",
         status: error.response?.status,
         details: error.response?.data
       };
@@ -296,7 +315,7 @@ ipcMain.handle("midas:request", async (_event, input: RequestInput): Promise<Req
 
     return {
       ok: false,
-      message: "알 수 없는 오류가 발생했습니다."
+      message: "\uC54C \uC218 \uC5C6\uB294 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4."
     };
   }
 });
@@ -317,11 +336,3 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
-
-
-
-
-
-
-
-

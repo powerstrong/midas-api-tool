@@ -1,11 +1,50 @@
-import { fblaDefinition } from "../features/endpoints/definitions/fbla";
+﻿import { fblaDefinition } from "../features/endpoints/definitions/fbla";
 import { stldDefinition } from "../features/endpoints/definitions/stld";
 import { cnldDefinition } from "../features/endpoints/definitions/cnld";
 import { nodeDefinition } from "../features/endpoints/definitions/node";
 import { elemDefinition } from "../features/endpoints/definitions/elem";
+import {
+  bodfDefinition,
+  bmldDefinition,
+  sdspDefinition,
+  nmasDefinition,
+  ltomDefinition,
+  nbofDefinition,
+  psltDefinition,
+  presDefinition,
+  pnldDefinition,
+  pnlaDefinition,
+  fbldDefinition,
+  fmldDefinition,
+  pospDefinition,
+  epstDefinition,
+  epseDefinition,
+  poslDefinition
+} from "../features/endpoints/definitions/bulk-static-loads";
 
 export type DbCategoryId = "static-loads" | "modeling";
-export type DbEndpointId = "FBLA" | "STLD" | "CNLD" | "NODE" | "ELEM";
+export type DbEndpointId =
+  | "FBLA"
+  | "STLD"
+  | "CNLD"
+  | "NODE"
+  | "ELEM"
+  | "BODF"
+  | "BMLD"
+  | "SDSP"
+  | "NMAS"
+  | "LTOM"
+  | "NBOF"
+  | "PSLT"
+  | "PRES"
+  | "PNLD"
+  | "PNLA"
+  | "FBLD"
+  | "FMLD"
+  | "POSP"
+  | "EPST"
+  | "EPSE"
+  | "POSL";
 
 export type FieldKind =
   | "text"
@@ -13,7 +52,9 @@ export type FieldKind =
   | "integer"
   | "boolean"
   | "integer-array"
+  | "number-array"
   | "string-array"
+  | "object"
   | "object-array"
   | "select";
 
@@ -110,7 +151,23 @@ export const DB_DEFINITIONS: DbDefinition[] = [
   elemDefinition,
   fblaDefinition,
   stldDefinition,
-  cnldDefinition
+  cnldDefinition,
+  bodfDefinition,
+  bmldDefinition,
+  sdspDefinition,
+  nmasDefinition,
+  ltomDefinition,
+  nbofDefinition,
+  psltDefinition,
+  presDefinition,
+  pnldDefinition,
+  pnlaDefinition,
+  fbldDefinition,
+  fmldDefinition,
+  pospDefinition,
+  epstDefinition,
+  epseDefinition,
+  poslDefinition
 ];
 
 export const DB_BY_ENDPOINT = Object.fromEntries(
