@@ -8,11 +8,29 @@ export const stldDefinition: DbDefinition = {
   label: "STLD",
   description: stldHelp.description,
   path: "db/STLD",
-  keyLabel: "KEY",
-  keyHelperText: stldHelp.keyHelperText,
+  keyLabel: "No.",
+  keyHelperText: "정적 하중 조건의 고유 번호(ID)입니다.",
   fields: [
-    { key: "NAME", label: "NAME", kind: "text", width: 160, helperText: stldHelp.fieldHelperText.NAME },
-    { key: "TYPE", label: "TYPE", kind: "text", width: 120, helperText: stldHelp.fieldHelperText.TYPE },
-    { key: "DESC", label: "DESC", kind: "text", width: 220, helperText: stldHelp.fieldHelperText.DESC }
+    {
+      key: "NAME",
+      label: "Name",
+      kind: "text",
+      width: 160,
+      helperText: "정적 하중 조건의 고유 이름입니다. 예: DL, LL, WL"
+    },
+    {
+      key: "TYPE",
+      label: "Type",
+      kind: "text",
+      width: 120,
+      helperText: "하중 종류를 나타내는 코드입니다. 예: D, L, W, S, USER"
+    },
+    {
+      key: "DESC",
+      label: "Description",
+      kind: "text",
+      width: 220,
+      helperText: "정적 하중 조건에 대한 상세 설명입니다."
+    }
   ]
 };
