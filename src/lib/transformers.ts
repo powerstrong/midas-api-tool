@@ -1,10 +1,12 @@
-﻿import type { DbEndpointId, GridRow, PreviewResult } from "../shared/midas";
+import type { DbEndpointId, GridRow, PreviewResult } from "../shared/midas";
 import { buildCnldPayload, createBlankCnldRow, rowsFromCnldGet } from "../features/endpoints/transformers/cnld";
+import { buildElemPayload, createBlankElemRow, rowsFromElemGet } from "../features/endpoints/transformers/elem";
 import { buildFblaPayload, createBlankFblaRow, rowsFromFblaGet } from "../features/endpoints/transformers/fbla";
 import { buildStldPayload, createBlankStldRow, rowsFromStldGet } from "../features/endpoints/transformers/stld";
 import { buildNodePayload, createBlankNodeRow, rowsFromNodeGet } from "../features/endpoints/transformers/node";
 
 const payloadBuilders: Record<DbEndpointId, (rows: GridRow[]) => PreviewResult> = {
+  ELEM: buildElemPayload,
   FBLA: buildFblaPayload,
   STLD: buildStldPayload,
   CNLD: buildCnldPayload,
@@ -12,6 +14,7 @@ const payloadBuilders: Record<DbEndpointId, (rows: GridRow[]) => PreviewResult> 
 };
 
 const getRowBuilders: Record<DbEndpointId, (data: unknown) => GridRow[]> = {
+  ELEM: rowsFromElemGet,
   FBLA: rowsFromFblaGet,
   STLD: rowsFromStldGet,
   CNLD: rowsFromCnldGet,
@@ -19,6 +22,7 @@ const getRowBuilders: Record<DbEndpointId, (data: unknown) => GridRow[]> = {
 };
 
 const blankRowBuilders: Record<DbEndpointId, (seed: number) => GridRow> = {
+  ELEM: createBlankElemRow,
   FBLA: createBlankFblaRow,
   STLD: createBlankStldRow,
   CNLD: createBlankCnldRow,

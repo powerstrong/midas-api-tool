@@ -772,24 +772,15 @@ export const EndpointGridPanel = ({
             <div className="grid-subtitle">{definition.description}</div>
           </div>
           <div className="grid-meta">
-            {pasteSummary ? (
-              <div className="grid-chip accent">
-                <span>최근 붙여넣기</span>
-                <strong>
-                  {pasteSummary.rowCount}행 x {pasteSummary.columnCount}열
-                  {pasteSummary.skippedHeader ? " · 헤더 제외" : ""}
-                </strong>
-              </div>
-            ) : null}
             {issues.length > 0 ? (
               <div className="grid-chip warning">
-                <span>검증 필요</span>
-                <strong>{issues.length}건 확인 필요</strong>
+                <span>{"\uAC80\uC99D \uD544\uC694"}</span>
+                <strong>{`${issues.length}건 확인 필요`}</strong>
               </div>
             ) : (
               <div className="grid-chip success">
-                <span>검증 필요</span>
-                <strong>현재 입력 형식 양호</strong>
+                <span>{"\uAC80\uC99D \uC0C1\uD0DC"}</span>
+                <strong>{"현재 입력 형식 양호"}</strong>
               </div>
             )}
           </div>
@@ -800,23 +791,23 @@ export const EndpointGridPanel = ({
         <button
           onClick={() => void loadCurrentData()}
           disabled={isBusy}
-          title="선택한 엔드포인트의 현재 데이터를 전체 불러옵니다."
+          title={"선택한 엔드포인트의 현재 데이터를 전체 불러옵니다."}
         >
-          전체 불러오기
+          {"전체 불러오기"}
         </button>
         <button
           onClick={() => void submit("PUT")}
           disabled={isBusy}
-          title="지금 표에 입력한 내용으로 MIDAS API 데이터를 반영합니다."
+          title={"지금 표에 입력한 내용으로 MIDAS API 데이터를 반영합니다."}
         >
-          적용하기
+          {"적용하기"}
         </button>
         <button
           onClick={handleDeleteSelectedOnServer}
           disabled={isBusy || !selectedRange}
-          title="현재 선택한 셀 범위에 포함된 행을 KEY 기준으로 삭제합니다."
+          title={"현재 선택한 행 범위에 포함된 항목을 KEY 기준으로 삭제합니다."}
         >
-          선택 삭제
+          {"선택 삭제"}
         </button>
       </div>
 
@@ -866,14 +857,15 @@ export const EndpointGridPanel = ({
             className="grid-row-delete-button"
             style={{ top: `${hoveredRowDelete.top}px`, height: `${hoveredRowDelete.height}px`, ...(hoveredRowDelete.left == null ? {} : { left: `${hoveredRowDelete.left}px`, right: "auto" }) }}
             onClick={handleDeleteRows}
-            aria-label="행 삭제"
+            aria-label={"행 삭제"}
           >
-            삭제
+            {"삭제"}
           </button>
         ) : null}
       </div>
     </div>
   );
 };
+
 
 

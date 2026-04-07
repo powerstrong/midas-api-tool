@@ -5,6 +5,7 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 import { DB_DEFINITIONS, DbEndpointId, GridRow, type FieldKind } from "./shared/midas";
 import { getSelectedDefinition, useAppStore } from "./store/app-store";
 import type { EndpointPageProps } from "./features/endpoints/pages/EndpointPageProps";
+import ELEMPage from "./features/endpoints/pages/ELEMPage";
 import FBLAPage from "./features/endpoints/pages/FBLAPage";
 import STLDPage from "./features/endpoints/pages/STLDPage";
 import CNLDPage from "./features/endpoints/pages/CNLDPage";
@@ -62,6 +63,7 @@ const connectionLabelMap = {
 } as const;
 
 const endpointPages: Record<DbEndpointId, (props: EndpointPageProps) => JSX.Element> = {
+  ELEM: ELEMPage,
   FBLA: FBLAPage,
   STLD: STLDPage,
   CNLD: CNLDPage,
@@ -71,27 +73,27 @@ const endpointPages: Record<DbEndpointId, (props: EndpointPageProps) => JSX.Elem
 const heroLinks = [
   {
     icon: "github.png",
-    title: "GitHub 바로가기",
+    title: "GitHub \uBC14\uB85C\uAC00\uAE30",
     href: "https://github.com/powerstrong/midas-api-tool"
   },
   {
     icon: "lime.png",
-    title: "라임구조엔지니어링 바로가기",
+    title: "\uB77C\uC784\uAD6C\uC870\uAE30\uC220\uC0AC\uC0AC\uBB34\uC18C \uBC14\uB85C\uAC00\uAE30",
     href: "http://www.xn--989almi3wt4jd4hrmb.kr/main"
   },
   {
     icon: "midasgen.jpg",
-    title: "MIDAS GEN 매뉴얼 바로가기",
+    title: "MIDAS API \uBCF4\uC870 \uB9E4\uB274\uC5BC \uBC14\uB85C\uAC00\uAE30",
     href: "https://support.midasuser.com/hc/ko/articles/49909210848537-MIDAS-GEN-NX-Online-Manual"
   },
   {
     icon: "midascivil.jpg",
-    title: "MIDAS Civil 매뉴얼 바로가기",
+    title: "MIDAS Civil \uB9E4\uB274\uC5BC \uBC14\uB85C\uAC00\uAE30",
     href: "https://support.midasuser.com/hc/ko/articles/38868325423769-MIDAS-CIVIL-NX-KR-Online-Manual"
   },
   {
     icon: "midasapi.png",
-    title: "MIDAS API 매뉴얼 바로가기",
+    title: "MIDAS API \uB9E4\uB274\uC5BC \uBC14\uB85C\uAC00\uAE30",
     href: "https://support.midasuser.com/hc/ko/p/gate_api_manual"
   }
 ] as const;
@@ -303,7 +305,7 @@ const App = () => {
               <p>{uiText.appDescription}</p>
             </div>
           </div>
-          <div className="hero-links" aria-label="바로가기 링크">
+          <div className="hero-links" aria-label="\uBC14\uB85C\uAC00\uAE30 \uB9C1\uD06C">
             {heroLinks.map((item) => (
               <a
                 key={item.title}
@@ -389,7 +391,7 @@ const App = () => {
                 <input
                   value={endpointSearch}
                   onChange={(event) => setEndpointSearch(event.target.value)}
-                  placeholder="NODE, FBLA, STLD, CNLD..."
+                  placeholder="NODE, ELEM, FBLA, STLD, CNLD..."
                 />
               </label>
               {recentDefinitions.length > 0 ? (
@@ -471,6 +473,8 @@ const App = () => {
 };
 
 export default App;
+
+
 
 
 
