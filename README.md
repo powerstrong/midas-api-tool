@@ -59,3 +59,11 @@ npm run dist:win
 ## 참고 자료
 - [MIDAS API manual](https://support.midasuser.com/hc/ko/p/gate_api_manual)
 - [MIDAS online manual reference](https://support.midasuser.com/hc/ko/articles/49909210848537-MIDAS-GEN-NX-Online-Manual)
+
+## 라이선스
+Copyright (c) 2026 powerstrong. All rights reserved.
+
+이 프로그램은 [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ko) 라이선스를 따릅니다.
+- **저작자 표시**: 만든 이의 정보를 표시해야 합니다.
+- **비영리**: 상업적인 목적으로 사용할 수 없습니다.
+- **변경 금지**: 이 프로그램을 수정하거나 이를 기반으로 한 2차 저작물을 만들 수 없습니다.
