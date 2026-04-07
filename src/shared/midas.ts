@@ -63,8 +63,9 @@ export interface ConnectionInput {
 
 export interface RequestInput extends ConnectionInput {
   endpoint: DbEndpointId;
-  method: "GET" | "POST" | "PUT";
+  method: "GET" | "POST" | "PUT" | "DELETE";
   body?: unknown;
+  ids?: number[];
 }
 
 export interface RequestSuccess {
@@ -108,3 +109,5 @@ export const DB_DEFINITIONS: DbDefinition[] = [nodeDefinition, fblaDefinition, s
 export const DB_BY_ENDPOINT = Object.fromEntries(
   DB_DEFINITIONS.map((definition) => [definition.endpoint, definition])
 ) as Record<DbEndpointId, DbDefinition>;
+
+

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CellClassParams, ColDef } from "ag-grid-community";
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from "ag-grid-community";
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -10,6 +10,7 @@ import STLDPage from "./features/endpoints/pages/STLDPage";
 import CNLDPage from "./features/endpoints/pages/CNLDPage";
 import NODEPage from "./features/endpoints/pages/NODEPage";
 import { WorkResultPanel } from "./features/results/WorkResultPanel";
+import GridTooltip from "./components/GridTooltip";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -158,7 +159,9 @@ const App = () => {
     setSelectedRowIds,
     testConnection,
     loadCurrentData,
-    submit
+    submit,
+    deleteSelectedOnServer,
+    selectedRowIds
   } = useAppStore();
 
   const definition = getSelectedDefinition(selectedEndpoint);
@@ -211,10 +214,6 @@ const App = () => {
           field.kind === "select" && field.options
             ? { values: field.options.map((option) => option.value) }
             : undefined,
-        tooltipValueGetter: (params) => {
-          const rowId = params.data?.__rowId ?? "";
-          return issueMap.get(`${rowId}:${field.key}`) ?? field.helperText ?? "";
-        },
         cellClass: (params: CellClassParams<GridRow>) => {
           const rowId = params.data?.__rowId ?? "";
           return issueMap.has(`${rowId}:${field.key}`) ? "cell-error" : "";
@@ -229,7 +228,8 @@ const App = () => {
     () => ({
       resizable: true,
       sortable: false,
-      filter: false
+      filter: false,
+      tooltipComponent: GridTooltip
     }),
     []
   );
@@ -278,10 +278,16 @@ const App = () => {
     addRow,
     deleteSelectedRows,
     loadCurrentData,
-    submit
+    submit,
+    deleteSelectedOnServer,
+    selectedRowCount: selectedRowIds.length
   };
 
   const SelectedEndpointPage = endpointPages[selectedEndpoint];
+
+  useEffect(() => {
+    void initialize();
+  }, [initialize]);
 
   return (
     <div className="app-shell">
@@ -465,6 +471,12 @@ const App = () => {
 };
 
 export default App;
+
+
+
+
+
+
 
 
 

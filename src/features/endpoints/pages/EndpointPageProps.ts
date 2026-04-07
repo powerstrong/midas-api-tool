@@ -1,4 +1,4 @@
-﻿import type { ColDef } from "ag-grid-community";
+import type { ColDef } from "ag-grid-community";
 import type { Theme } from "ag-grid-community";
 import type { DbDefinition, GridRow, RowIssue } from "../../../shared/midas";
 
@@ -19,4 +19,8 @@ export interface EndpointPageProps {
   deleteSelectedRows: () => void;
   loadCurrentData: () => Promise<void>;
   submit: (method: "POST" | "PUT") => Promise<void>;
+  deleteSelectedOnServer: () => Promise<void>;
+  selectedRowCount: number;
 }
+
+

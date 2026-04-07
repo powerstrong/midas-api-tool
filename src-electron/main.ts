@@ -1,4 +1,4 @@
-ï»¿import { app, BrowserWindow, dialog, ipcMain, shell, Menu } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, shell, Menu } from "electron";
 import path from "node:path";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import axios from "axios";
@@ -29,6 +29,14 @@ const defaultSettings = (): AppSettings => ({
 });
 
 const sanitizeBaseUrl = (value: string) => value.trim().replace(/\/+$/, "");
+
+const buildDeletePath = (pathName: string, ids?: number[]) => {
+  if (!ids || ids.length === 0) {
+    return pathName;
+  }
+
+  return `${pathName}/${ids.join(",")}`;
+};
 
 const sanitizeRecentEndpoints = (value: unknown): DbEndpointId[] => {
   const validEndpoints: DbEndpointId[] = ["FBLA", "STLD", "CNLD", "NODE"];
@@ -182,7 +190,7 @@ ipcMain.handle("midas:update-settings", async (_event, patch: AppSettingsPatch) 
 ipcMain.handle("midas:choose-schema-folder", async (): Promise<FolderSelectionResult> => {
   const current = await readSettings();
   const result = await dialog.showOpenDialog({
-    title: "ìŠ¤í‚¤ë§ˆ ì €ì¥ í´ë” ì„ íƒ",
+    title: "½ºÅ°¸¶ ÀúÀå Æú´õ ¼±ÅÃ",
     defaultPath: current.schemaFolderPath || app.getPath("documents"),
     properties: ["openDirectory", "createDirectory"]
   });
@@ -198,7 +206,7 @@ ipcMain.handle("midas:choose-schema-folder", async (): Promise<FolderSelectionRe
   if (schemaResult.created) {
     return {
       settings: next,
-      message: "ìŠ¤í‚¤ë§ˆ íŒŒì¼ì´ ì—†ì–´ ê¸°ë³¸ íŒŒì¼ì„ ìƒì„±í–ˆìŠµë‹ˆë‹¤."
+      message: "½ºÅ°¸¶ ÆÄÀÏÀÌ ¾ø¾î ±âº» ÆÄÀÏÀ» »ı¼ºÇß½À´Ï´Ù."
     };
   }
 
@@ -225,23 +233,28 @@ ipcMain.handle("midas:request", async (_event, input: RequestInput): Promise<Req
   const definition = DB_BY_ENDPOINT[input.endpoint];
 
   if (!baseUrl) {
-    return { ok: false, message: "Base URLì„ ì…ë ¥í•˜ì„¸ìš”." };
+    return { ok: false, message: "Base URLÀ» ÀÔ·ÂÇÏ¼¼¿ä." };
   }
 
   if (!apiKey) {
-    return { ok: false, message: "MAPI-Keyë¥¼ ì…ë ¥í•˜ì„¸ìš”." };
+    return { ok: false, message: "MAPI-Key¸¦ ÀÔ·ÂÇÏ¼¼¿ä." };
+  }
+
+  if (input.method === "DELETE" && (!input.ids || input.ids.length === 0)) {
+    return { ok: false, message: "»èÁ¦ÇÒ ID°¡ ¾ø½À´Ï´Ù." };
   }
 
   let targetUrl: string;
 
   try {
-    targetUrl = new URL(definition.path, `${baseUrl}/`).toString();
+    const requestPath = input.method === "DELETE" ? buildDeletePath(definition.path, input.ids) : definition.path;
+    targetUrl = new URL(requestPath, `${baseUrl}/`).toString();
   } catch {
-    return { ok: false, message: "Base URL í˜•ì‹ì´ ì˜¬ë°”ë¥´ì§€ ì•ŠìŠµë‹ˆë‹¤." };
+    return { ok: false, message: "Base URL Çü½ÄÀÌ ¿Ã¹Ù¸£Áö ¾Ê½À´Ï´Ù." };
   }
 
   if (!isAllowedUrl(baseUrl, targetUrl)) {
-    return { ok: false, message: "í—ˆìš©ë˜ì§€ ì•Šì€ ìš”ì²­ ì£¼ì†Œì…ë‹ˆë‹¤." };
+    return { ok: false, message: "Çã¿ëµÇÁö ¾ÊÀº ¿äÃ» ÁÖ¼ÒÀÔ´Ï´Ù." };
   }
 
   try {
@@ -268,14 +281,14 @@ ipcMain.handle("midas:request", async (_event, input: RequestInput): Promise<Req
     return {
       ok: false,
       status: response.status,
-      message: `ìš”ì²­ì´ ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤. (${response.status})`,
+      message: `¿äÃ»ÀÌ ½ÇÆĞÇß½À´Ï´Ù. (${response.status})`,
       details: response.data
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       return {
         ok: false,
-        message: error.message || "ë„¤íŠ¸ì›Œí¬ ìš”ì²­ ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤.",
+        message: error.message || "³×Æ®¿öÅ© ¿äÃ» Áß ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù.",
         status: error.response?.status,
         details: error.response?.data
       };
@@ -283,7 +296,7 @@ ipcMain.handle("midas:request", async (_event, input: RequestInput): Promise<Req
 
     return {
       ok: false,
-      message: "ì•Œ ìˆ˜ ì—†ëŠ” ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤."
+      message: "¾Ë ¼ö ¾ø´Â ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù."
     };
   }
 });
@@ -304,6 +317,9 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+
+
 
 
 

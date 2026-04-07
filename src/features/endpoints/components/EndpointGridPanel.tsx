@@ -1,4 +1,4 @@
-﻿import {
+import {
   useEffect,
   useMemo,
   useRef,
@@ -91,7 +91,8 @@ export const EndpointGridPanel = ({
   addRow,
   deleteSelectedRows,
   loadCurrentData,
-  submit
+  submit,
+  deleteSelectedOnServer
 }: EndpointPageProps) => {
   const gridApiRef = useRef<GridApi<GridRow>>();
   const gridWrapRef = useRef<HTMLDivElement | null>(null);
@@ -332,6 +333,18 @@ export const EndpointGridPanel = ({
     setHoveredRowDelete(null);
   };
 
+
+  const handleDeleteSelectedOnServer = () => {
+    const rowIds = Array.from(new Set(getSelectedRowIdsFromRange()));
+    if (rowIds.length === 0) {
+      return;
+    }
+
+    setSelectedRowIds(rowIds);
+    setTimeout(() => {
+      void deleteSelectedOnServer();
+    }, 0);
+  };
 
   const detectHeaderRow = (data: string[][]) => {
     const firstRow = data[0];
@@ -784,14 +797,26 @@ export const EndpointGridPanel = ({
       </div>
 
       <div className="grid-actions">
-        <button onClick={() => void loadCurrentData()} disabled={isBusy}>
-          현재 데이터 불러오기 (GET)
+        <button
+          onClick={() => void loadCurrentData()}
+          disabled={isBusy}
+          title="선택한 엔드포인트의 현재 데이터를 전체 불러옵니다."
+        >
+          전체 불러오기
         </button>
-        <button onClick={() => void submit("POST")} disabled={isBusy}>
-          입력 실행 (POST)
+        <button
+          onClick={() => void submit("PUT")}
+          disabled={isBusy}
+          title="지금 표에 입력한 내용으로 MIDAS API 데이터를 반영합니다."
+        >
+          적용하기
         </button>
-        <button onClick={() => void submit("PUT")} disabled={isBusy}>
-          전체 반영 (PUT)
+        <button
+          onClick={handleDeleteSelectedOnServer}
+          disabled={isBusy || !selectedRange}
+          title="현재 선택한 셀 범위에 포함된 행을 KEY 기준으로 삭제합니다."
+        >
+          선택 삭제
         </button>
       </div>
 

@@ -1,4 +1,4 @@
-ï»¿import { create } from "zustand";
+import { create } from "zustand";
 import {
   AppSettings,
   DB_BY_ENDPOINT,
@@ -46,6 +46,7 @@ interface AppState {
   loadCurrentData: () => Promise<void>;
   refreshDerivedState: () => void;
   submit: (method: "POST" | "PUT") => Promise<void>;
+  deleteSelectedOnServer: () => Promise<void>;
 }
 
 const defaultPanelState: AppSettings["panelState"] = {
@@ -64,8 +65,19 @@ const getNextKeySeed = (rows: GridRow[]) => {
 
 const getInitialRows = (endpoint: DbEndpointId) => [createBlankRow(endpoint, 1)];
 
+const getSelectedDeleteIds = (rows: GridRow[], selectedRowIds: string[]) => {
+  return rows
+    .filter((row) => selectedRowIds.includes(row.__rowId ?? ""))
+    .map((row) => Number(row.KEY))
+    .filter((value) => Number.isInteger(value) && value > 0);
+};
+
 const buildRecentEndpoints = (selectedEndpoint: DbEndpointId, recentEndpoints: DbEndpointId[]) => {
   return [selectedEndpoint, ...recentEndpoints.filter((endpoint) => endpoint !== selectedEndpoint)];
+};
+
+const getInitialSelectedEndpoint = (settings: AppSettings): DbEndpointId => {
+  return settings.recentEndpoints?.[0] ?? "NODE";
 };
 
 const syncSettings = (settings: AppSettings, set: (partial: Partial<AppState>) => void) => {
@@ -93,7 +105,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   isBusy: false,
   initialize: async () => {
     const settings = await window.midasBridge.loadSettings();
+    const initialEndpoint = getInitialSelectedEndpoint(settings);
     syncSettings(settings, set);
+    set({
+      selectedEndpoint: initialEndpoint,
+      rows: getInitialRows(initialEndpoint),
+      selectedRowIds: [],
+      resultMessage: undefined
+    });
     get().refreshDerivedState();
   },
   setBaseUrl: (value) => {
@@ -218,7 +237,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       isBusy: false,
       connectionState: result.ok ? "success" : "error",
       resultMessage: result.ok
-        ? { tone: "success", text: `ì—°ê²°ë¨ (${result.status})` }
+        ? { tone: "success", text: `¿¬°áµÊ (${result.status})` }
         : { tone: "error", text: result.message }
     });
   },
@@ -249,7 +268,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       selectedRowIds: [],
       resultMessage: {
         tone: "success",
-        text: `í˜„ì¬ ë°ì´í„°ë¥¼ ë¶ˆëŸ¬ì™”ìŠµë‹ˆë‹¤. (${rows.length}í–‰)`
+        text: `ÇöÀç µ¥ÀÌÅÍ¸¦ ºÒ·¯¿Ô½À´Ï´Ù. (${rows.length}Çà)`
       }
     });
     get().refreshDerivedState();
@@ -281,14 +300,62 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       isBusy: false,
       resultMessage: result.ok
-        ? { tone: "success", text: `${method} ìš”ì²­ì´ ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤. (${result.status})` }
+        ? { tone: "success", text: `${method} ¿äÃ»ÀÌ ¿Ï·áµÇ¾ú½À´Ï´Ù. (${result.status})` }
         : {
             tone: "error",
             text: result.status ? `${result.message}: ${result.status}` : result.message
           }
     });
+  },
+  deleteSelectedOnServer: async () => {
+    const state = get();
+    const ids = getSelectedDeleteIds(state.rows, state.selectedRowIds);
+
+    if (ids.length === 0) {
+      set({
+        resultMessage: { tone: "error", text: "»èÁ¦ÇÒ ÇàÀ» ¸ÕÀú ¼±ÅÃÇÏ¼¼¿ä." }
+      });
+      return;
+    }
+
+    set({ isBusy: true, resultMessage: undefined });
+
+    const result = await window.midasBridge.request({
+      baseUrl: state.baseUrl,
+      apiKey: state.apiKey,
+      endpoint: state.selectedEndpoint,
+      method: "DELETE",
+      ids
+    });
+
+    if (!result.ok) {
+      set({
+        isBusy: false,
+        resultMessage: {
+          tone: "error",
+          text: result.status ? `${result.message}: ${result.status}` : result.message
+        }
+      });
+      return;
+    }
+
+    const remaining = state.rows.filter((row) => !state.selectedRowIds.includes(row.__rowId ?? ""));
+    set({
+      isBusy: false,
+      rows: remaining.length > 0 ? remaining : getInitialRows(state.selectedEndpoint),
+      selectedRowIds: [],
+      issues: [],
+      resultMessage: {
+        tone: "success",
+        text: `DELETE ¿äÃ»ÀÌ ¿Ï·áµÇ¾ú½À´Ï´Ù. (${result.status})`
+      }
+    });
+    get().refreshDerivedState();
   }
 }));
 
 export const getSelectedDefinition = (endpoint: DbEndpointId) => DB_BY_ENDPOINT[endpoint];
+
+
+
 
