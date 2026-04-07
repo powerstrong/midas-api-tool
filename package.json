@@ -46,6 +46,7 @@
       "package.json"
     ],
     "win": {
+      "icon": "public/app-icon.ico",
       "target": [
         {
           "target": "nsis",
@@ -61,6 +62,9 @@
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
+      "installerIcon": "public/app-icon.ico",
+      "uninstallerIcon": "public/app-icon.ico",
+      "installerHeaderIcon": "public/app-icon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
     }
